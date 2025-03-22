@@ -1,0 +1,23 @@
+{
+  "name": "scdl-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@mui/material": "^5.14.20",
+    "axios": "^1.8.4",
+    "formik": "^2.4.6",
+    "js-cookie": "^3.0.5",
+    "next": "15.2.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "yup": "^1.6.1"
+  }
+}
