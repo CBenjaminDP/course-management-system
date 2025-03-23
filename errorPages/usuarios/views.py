@@ -29,6 +29,7 @@ def listar_usuarios(request):
     return JsonResponse(data, safe=False)
 
 @csrf_exempt
+@permission_classes([IsAuthenticated])
 def registrar_usuario(request):
     if request.method == 'POST':
         try:

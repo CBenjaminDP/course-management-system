@@ -5,8 +5,13 @@ from .models import Tarea
 from .forms import TareaForm
 from django.shortcuts import redirect
 from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 
 #Metodo que devuelve el JSON
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def listar_tareas(request):
     #Obtener todas la instancias del objeto de la BD
     tareas = Tarea.objects.all()
@@ -23,7 +28,10 @@ def listar_tareas(request):
     #Retornar el JSON
     return JsonResponse(data, safe=False)
 
-#Funcion que registre sin recaragar la pagina osea sin hacer render 
+#Funcion que registre sin recaragar la pagina osea sin hacer render
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def registrar_tarea(request):
     #Si el metodo es POST
     if request.method == 'POST':
@@ -47,6 +55,9 @@ def registrar_tarea(request):
 
 
 #Funcion que actualiza sin recargar la pagina
+@csrf_exempt
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def actualizar_tarea(request, id):
     if request.method == 'PUT':
         #Intentar actualizar el objeto
@@ -61,7 +72,7 @@ def actualizar_tarea(request, id):
             tarea.titulo = data['titulo']
             tarea.descripcion = data['descripcion']
             tarea.fecha_entrega = data['fecha_entrega']
-            tarea.tema = data['tema']
+            tarea.tema_id = data['tema']
             #4) Guardar los cambios
             tarea.save()
             #Retornar un JSON con el mensaje de exito
@@ -73,6 +84,9 @@ def actualizar_tarea(request, id):
 
 
 #Funcion que elimina sin recargar la pagina
+@csrf_exempt
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def eliminar_tarea(request, id):
     if request.method == 'DELETE':
         #Intentar eliminar el objeto
@@ -92,6 +106,8 @@ def eliminar_tarea(request, id):
 
 
 #Funcion que obtiene un objeto sin recargar la pagina
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def obtener_tarea(request, id):
     if request.method == 'GET':
         #Intentar obtener el objeto
