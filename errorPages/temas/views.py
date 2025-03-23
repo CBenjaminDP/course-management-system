@@ -5,8 +5,14 @@ from .models import Tema
 from .forms import TemaForm
 from django.shortcuts import redirect
 from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+
 
 #Metodo que devuelve el JSON
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def listar_temas(request):
     #Obtener todas la instancias del objeto de la BD
     temas = Tema.objects.all()
@@ -27,12 +33,12 @@ def listar_temas(request):
 
 
 #Funcion que registre sin recaragar la pagina osea sin hacer render 
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def registrar_tema(request):
-    #Si el metodo es POST
     if request.method == 'POST':
-        #aqui se puede validar si hay sesion antes de hacer el registro
-        try: 
-            #intentar obtener los datos del body request 
+        try:
             data = json.loads(request.body)
             #Crear una instancia del modelo 
             tema = Tema.objects.create(
@@ -52,51 +58,44 @@ def registrar_tema(request):
 
 
 #Funcion que actualiza sin recargar la pagina
+@csrf_exempt
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def actualizar_tema(request, id):
-     
     if request.method == 'PUT':
-     #Intentar actualizar el objeto
-     #1) Obtener la entidad a actualizar
-     #Parametros: modelo y id o identificador del objeto
-       tema = get_object_or_404(Tema, id=id)
-
-       try:
-           #2) Obtener los datos del body request
-           data = json.loads(request.body)
-           #3) Actualizar los campos del objeto
-           tema.nombre = data['nombre']
-           tema.unidad = data['unidad']
-           tema.descripcion = data['descripcion']
-           tema.orden = data['orden']
-           #4) Guardar los cambios
-           tema.save()
-           #5) Retornar un JSON
-           return JsonResponse({'mensaje': 'Tema actualizado correctamente'}, status=200)
-       except Exception as e:
-              #Si hay un error retornar un JSON
+        tema = get_object_or_404(Tema, id=id)
+        try:
+            data = json.loads(request.body)
+            tema.nombre = data['nombre']
+            tema.unidad_id = data['unidad']  # Use unidad_id instead of unidad
+            tema.descripcion = data['descripcion']
+            tema.orden = data['orden']
+            tema.save()
+            return JsonResponse({'mensaje': 'Tema actualizado correctamente'}, status=200)
+        except Exception as e:
             return JsonResponse({'mensaje': 'Error al actualizar el tema'}, status=400)
     return JsonResponse({'mensaje': 'Método no permitido'}, status=405)
 
 
 #Funcion que elimina sin recargar la pagina
+@csrf_exempt
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def eliminar_tema(request, id):
     if request.method == 'DELETE':
-        #Intentar eliminar el objeto
-        #1) Obtener la entidad a eliminar
-        #Parametros: modelo y id o identificador del objeto
         tema = get_object_or_404(Tema, id=id)
         try:
-            #Eliminar la entidad
             tema.delete()
-            #Retornar un JSON
             return JsonResponse({'mensaje': 'Tema eliminado correctamente'}, status=200)
         except Exception as e:
-            #Si hay un error retornar un JSON
             return JsonResponse({'mensaje': 'Error al eliminar el tema'}, status=400)
     return JsonResponse({'mensaje': 'Método no permitido'}, status=405)
          
 
 #Funcion que obtiene un objeto por su id
+@csrf_exempt
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def obtener_tema(request, id):
    if request.method == 'GET':
         #Intentar obtener el objeto
