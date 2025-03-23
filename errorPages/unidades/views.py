@@ -5,6 +5,7 @@ from .models import Unidad
 from .forms import UnidadForm
 from django.shortcuts import redirect
 from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
 
 #Metodo que devuelve el JSON
 def listar_unidades(request):
@@ -23,6 +24,7 @@ def listar_unidades(request):
     return JsonResponse(data, safe=False)
 
 #Funcion que registre sin recargar la pagina osea sin hacer render
+@csrf_exempt
 def registrar_unidad(request):
     #checar que estemos manejando un metodo POST
     if request.method == 'POST':
@@ -44,6 +46,7 @@ def registrar_unidad(request):
     return JsonResponse({'error': 'Método no permitido'}, status=405)
 
 #Funcion que actualiza sin recargar la pagina osea sin hacer render
+@csrf_exempt
 def actualizar_unidad(request, id):
     #checar que estemos manejando un metodo PUT
     if request.method == 'PUT':
@@ -66,6 +69,7 @@ def actualizar_unidad(request, id):
     return JsonResponse({'error': 'Método no permitido'}, status=405)
 
 #Funcion que elimina sin recargar la pagina osea sin hacer render
+@csrf_exempt
 def eliminar_unidad(request, id):
     #checar que estemos manejando un metodo DELETE
     if request.method == 'DELETE':
