@@ -7,6 +7,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.hashers import make_password
 from django.views.decorators.csrf import csrf_exempt
+from uuid import UUID
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -28,6 +29,7 @@ def listar_usuarios(request):
     return JsonResponse(data, safe=False)
 
 @csrf_exempt
+@permission_classes([IsAuthenticated])
 def registrar_usuario(request):
     if request.method == 'POST':
         try:
@@ -103,23 +105,27 @@ def eliminar_usuario(request, id):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def obtener_usuario(request, id):
-    if request.method == 'GET':
-        try:
-            usuario = get_object_or_404(Usuario, id=id)
-            data = {
-                'id': usuario.id,
-                'username': usuario.username,
-                'password': usuario.password,
-                'nombre_completo': usuario.nombre_completo,
-                'email': usuario.email,
-                'rol': usuario.rol,
-                'token': usuario.token,
-                'fecha_creacion': usuario.fecha_creacion
-            }
-            return JsonResponse(data, safe=False, status=200)  # Agregado safe=False
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=400)
-    return JsonResponse({'error': 'Método no permitido'}, status=405)
+    try:
+        # Convertir el ID a UUID válido
+        if len(id) == 32:  # UUID sin guiones
+            formatted_id = f"{id[:8]}-{id[8:12]}-{id[12:16]}-{id[16:20]}-{id[20:]}"
+        else:
+            formatted_id = id
+            
+        usuario = get_object_or_404(Usuario, id=formatted_id)
+        data = {
+            'id': usuario.id,
+            'username': usuario.username,
+            'password': usuario.password,
+            'nombre_completo': usuario.nombre_completo,
+            'email': usuario.email,
+            'rol': usuario.rol,
+            'token': usuario.token,
+            'fecha_creacion': usuario.fecha_creacion
+        }
+        return JsonResponse(data, safe=False, status=200)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
 
 
 @api_view(['GET'])
@@ -149,3 +155,11 @@ def desactivar_usuario(request, id):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
     return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+def format_uuid(uuid_string):
+    """Helper function to handle UUIDs with or without hyphens"""
+    # Remove any existing hyphens
+    clean_uuid = uuid_string.replace('-', '')
+    # Insert hyphens in correct positions
+    formatted_uuid = f"{clean_uuid[:8]}-{clean_uuid[8:12]}-{clean_uuid[12:16]}-{clean_uuid[16:20]}-{clean_uuid[20:]}"
+    return formatted_uuid
