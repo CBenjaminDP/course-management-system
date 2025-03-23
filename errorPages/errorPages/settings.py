@@ -48,8 +48,32 @@ INSTALLED_APPS = [
     'temas',
     'unidades',
     'usuarios',
-
+    'rest_framework',
+    'rest_framework_simplejwt',
 ]
+
+# Add REST Framework settings
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
+
+# JWT settings
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -90,7 +114,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'course',
         'USER': 'root',
-        'PASSWORD': 'Isra1234$',
+        'PASSWORD': 'rootroot',
         'PORT': '3306',
         'HOST': 'localhost',
 
@@ -146,3 +170,5 @@ HANDLER500 = 'app.views.error_500_view'
 LOGIN_URL = '/users/login/'
 LOGIN_REDIRECT_URL = '/home' # Dónde irán los usuarios tras iniciar sesión
 LOGOUT_REDIRECT_URL = '/users/login/'
+
+AUTH_USER_MODEL = 'usuarios.Usuario'
