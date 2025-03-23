@@ -2,7 +2,7 @@
 
 import { useContext, useState } from "react";
 import { AuthContext } from "../../context/AuthorizationProvider";
-import { TextField, Button, Box, Typography, Link, IconButton, InputAdornment, Divider, Stack, FormControl, FormLabel, Checkbox, FormControlLabel } from "@mui/material";
+import { TextField, Button, Box, Typography, Link, IconButton, InputAdornment, Divider, Stack, FormControl, FormLabel, Checkbox, FormControlLabel, MenuItem, Select } from "@mui/material";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import Image from "next/image";
@@ -10,20 +10,25 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { styled } from '@mui/material/styles';
 import MuiCard from '@mui/material/Card';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'; // Icono de regresar
 
 // Esquema de validación con Yup
 const validationSchema = Yup.object({
-  height: '100vh',
-  minHeight: '100%',
-  email: Yup.string()
-    .email("Correo inválido")
-    .required("El correo es obligatorio"),
+  username: Yup.string()
+    .min(3, "El nombre de usuario debe tener al menos 3 caracteres")
+    .required("El nombre de usuario es obligatorio"),
   password: Yup.string()
     .min(8, "La contraseña debe tener al menos 8 caracteres")
     .matches(/[a-zA-Z]/, "Debe contener al menos una letra")
     .matches(/[0-9]/, "Debe contener al menos un número")
     .required("La contraseña es obligatoria"),
+  nombre_completo: Yup.string()
+    .required("El nombre completo es obligatorio"),
+  email: Yup.string()
+    .email("Correo inválido")
+    .required("El correo es obligatorio"),
+  rol: Yup.string()
+    .required("El rol es obligatorio"),
 });
 
 const Card = styled(MuiCard)(({ theme }) => ({
@@ -66,21 +71,24 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
   },
 }));
 
-const LoginForm = () => {
-  const { login } = useContext(AuthContext);
+const RegisterForm = () => {
+  const { register } = useContext(AuthContext); // Asume que tienes una función `register` en tu contexto
   const [showPassword, setShowPassword] = useState(false);
 
   const formik = useFormik({
     initialValues: {
-      email: "",
+      username: "",
       password: "",
+      nombre_completo: "",
+      email: "",
+      rol: "",
     },
     validationSchema,
     onSubmit: async (values, { setSubmitting, setErrors }) => {
       try {
-        await login(values.email, values.password);
+        await register(values); // Llama a la función de registro con los valores del formulario
       } catch (error) {
-        setErrors({ password: "Usuario o contraseña incorrectos." });
+        setErrors({ password: "Error al registrar. Inténtalo de nuevo." });
       }
       setSubmitting(false);
     },
@@ -91,6 +99,7 @@ const LoginForm = () => {
   };
 
   const handleGoBack = () => {
+    // Lógica para regresar (puedes usar un router si estás en una SPA)
     window.history.back();
   };
 
@@ -109,10 +118,10 @@ const LoginForm = () => {
         {/* Logo */}
         <Box sx={{ mb: 0, textAlign: 'center' }}>
           <Image
-            src="/logo.png"
+            src="/logo.png" // Reemplaza con la ruta de tu imagen
             alt="Logo"
-            width={180}
-            height={180}
+            width={180} // Ajusta el ancho según sea necesario
+            height={180} // Ajusta la altura según sea necesario
           />
         </Box>
 
@@ -122,7 +131,7 @@ const LoginForm = () => {
           variant="h4"
           sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)', textAlign: 'center' }}
         >
-          Iniciar sesión
+          Registrarse
         </Typography>
 
         <Box
@@ -136,20 +145,19 @@ const LoginForm = () => {
             gap: 2,
           }}
         >
-          {/* Campo de Correo */}
+          {/* Campo de Nombre de Usuario */}
           <FormControl>
-            <FormLabel htmlFor="email">Correo electrónico</FormLabel>
+            <FormLabel htmlFor="username">Nombre de usuario</FormLabel>
             <TextField
-              id="email"
-              type="email"
-              name="email"
-              placeholder="correo electrónico"
-              autoComplete="email"
+              id="username"
+              type="text"
+              name="username"
+              placeholder="Nombre de usuario"
               fullWidth
               variant="outlined"
-              {...formik.getFieldProps("email")}
-              error={formik.touched.email && Boolean(formik.errors.email)}
-              helperText={formik.touched.email && formik.errors.email}
+              {...formik.getFieldProps("username")}
+              error={formik.touched.username && Boolean(formik.errors.username)}
+              helperText={formik.touched.username && formik.errors.username}
             />
           </FormControl>
 
@@ -161,7 +169,6 @@ const LoginForm = () => {
               type={showPassword ? "text" : "password"}
               name="password"
               placeholder="Contraseña"
-              autoComplete="current-password"
               fullWidth
               variant="outlined"
               {...formik.getFieldProps("password")}
@@ -183,45 +190,77 @@ const LoginForm = () => {
             />
           </FormControl>
 
-          {/* Recordar contraseña */}
-          <FormControlLabel
-            control={<Checkbox value="remember" color="primary" />}
-            label="Recordar contraseña"
-          />
+          {/* Campo de Nombre Completo */}
+          <FormControl>
+            <FormLabel htmlFor="nombre_completo">Nombre completo</FormLabel>
+            <TextField
+              id="nombre_completo"
+              type="text"
+              name="nombre_completo"
+              placeholder="Nombre completo"
+              fullWidth
+              variant="outlined"
+              {...formik.getFieldProps("nombre_completo")}
+              error={formik.touched.nombre_completo && Boolean(formik.errors.nombre_completo)}
+              helperText={formik.touched.nombre_completo && formik.errors.nombre_completo}
+            />
+          </FormControl>
 
-          {/* Botón de inicio de sesión */}
+          {/* Campo de Correo Electrónico */}
+          <FormControl>
+            <FormLabel htmlFor="email">Correo electrónico</FormLabel>
+            <TextField
+              id="email"
+              type="email"
+              name="email"
+              placeholder="correo electrónico"
+              fullWidth
+              variant="outlined"
+              {...formik.getFieldProps("email")}
+              error={formik.touched.email && Boolean(formik.errors.email)}
+              helperText={formik.touched.email && formik.errors.email}
+            />
+          </FormControl>
+
+          {/* Campo de Rol */}
+          <FormControl>
+            <FormLabel htmlFor="rol">Rol</FormLabel>
+            <Select
+              id="rol"
+              name="rol"
+              fullWidth
+              variant="outlined"
+              {...formik.getFieldProps("rol")}
+              error={formik.touched.rol && Boolean(formik.errors.rol)}
+            >
+              <MenuItem value="usuario">Usuario</MenuItem>
+              <MenuItem value="admin">Administrador</MenuItem>
+            </Select>
+          </FormControl>
+
+          {/* Botón de Registro */}
           <Button
             type="submit"
             fullWidth
             variant="contained"
             disabled={formik.isSubmitting}
           >
-            Iniciar sesión
+            Registrarse
           </Button>
-
-          {/* Olvidé mi contraseña */}
-          <Link
-            component="button"
-            type="button"
-            variant="body2"
-            sx={{ alignSelf: 'center' }}
-          >
-            Olvidé mi contraseña
-          </Link>
         </Box>
 
         {/* Divider */}
         <Divider>o</Divider>
 
-        {/* Enlace para registrarse */}
+        {/* Enlace para iniciar sesión */}
         <Typography sx={{ textAlign: 'center', mt: 2 }}>
-          ¿No tienes una cuenta?{" "}
+          ¿Ya tienes una cuenta?{" "}
           <Link
-            href="/registro"
+            href="/iniciar-sesion"
             variant="body2"
             sx={{ alignSelf: 'center' }}
           >
-            Regístrate
+            Inicia sesión
           </Link>
         </Typography>
       </Card>
@@ -229,4 +268,4 @@ const LoginForm = () => {
   );
 };
 
-export default LoginForm;
+export default RegisterForm;
