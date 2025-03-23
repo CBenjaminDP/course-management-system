@@ -3,7 +3,13 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from .models import Usuario
 from .forms import UsuarioForm
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth.hashers import make_password
+from django.views.decorators.csrf import csrf_exempt
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def listar_usuarios(request):
     usuarios = Usuario.objects.all()
     data = [
@@ -21,45 +27,66 @@ def listar_usuarios(request):
     ]
     return JsonResponse(data, safe=False)
 
+@csrf_exempt
 def registrar_usuario(request):
     if request.method == 'POST':
-        #aqui se puede validar si hay sesion antes de hacer el registro
         try:
             data = json.loads(request.body)
-            usuario = Usuario.objects.create(
+            usuario = Usuario.objects.create_user(
                 username=data['username'],
                 password=data['password'],
                 nombre_completo=data['nombre_completo'],
                 email=data['email'],
-                rol=data['rol'],
-                token=data['token']
+                rol=data['rol']
             )
             return JsonResponse({'mensaje': 'Usuario creado correctamente', 'id': usuario.id}, status=201)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
     return JsonResponse({'error': 'Método no permitido'}, status=405)
 
+@csrf_exempt
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def actualizar_usuario(request, id):
     if request.method == 'PUT':
-        #Intentar actualizar el objeto
-        #1) Obtener la entidad a actualizar
-        #Parametros: modelo y id o identificador del objeto
         usuario = get_object_or_404(Usuario, id=id)
         try:
             data = json.loads(request.body)
-            usuario.username = data['username']
-            usuario.password = data['password']
-            usuario.nombre_completo = data['nombre_completo']
-            usuario.email = data['email']
-            usuario.rol = data['rol']
-            usuario.token = data['token']
-            usuario.save()  # Se agregó para asegurar que los cambios se guarden en la BD
+            
+            # Update only if field is present in request
+            if 'username' in data:
+                usuario.username = data['username']
+            if 'password' in data:
+                usuario.set_password(data['password'])
+            if 'nombre_completo' in data:
+                usuario.nombre_completo = data['nombre_completo']
+            if 'email' in data:
+                usuario.email = data['email']
+            if 'rol' in data:
+                usuario.rol = data['rol']
+            if 'is_active' in data:
+                usuario.is_active = data['is_active']
+            
+            usuario.save()
 
-            return JsonResponse({'mensaje': 'Usuario actualizado correctamente'}, status=200)
+            return JsonResponse({
+                'mensaje': 'Usuario actualizado correctamente',
+                'usuario': {
+                    'id': usuario.id,
+                    'username': usuario.username,
+                    'nombre_completo': usuario.nombre_completo,
+                    'email': usuario.email,
+                    'rol': usuario.rol,
+                    'is_active': usuario.is_active,
+                    'fecha_creacion': usuario.fecha_creacion
+                }
+            }, status=200)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
     return JsonResponse({'error': 'Método no permitido'}, status=405)
 
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def eliminar_usuario(request, id):
     if request.method == 'DELETE':
         #Intentar eliminar el objeto
@@ -73,6 +100,8 @@ def eliminar_usuario(request, id):
             return JsonResponse({'error': str(e)}, status=400)
     return JsonResponse({'error': 'Método no permitido'}, status=405)
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def obtener_usuario(request, id):
     if request.method == 'GET':
         try:
@@ -88,6 +117,35 @@ def obtener_usuario(request, id):
                 'fecha_creacion': usuario.fecha_creacion
             }
             return JsonResponse(data, safe=False, status=200)  # Agregado safe=False
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def protected_view(request):
+    return JsonResponse({
+        'message': 'This is a protected view',
+        'user': request.user.username,
+        'rol': request.user.rol
+    })
+
+
+@csrf_exempt
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def desactivar_usuario(request, id):
+    if request.method == 'PUT':
+        try:
+            usuario = get_object_or_404(Usuario, id=id)
+            usuario.is_active = not usuario.is_active
+            usuario.save()
+            status_message = 'activado' if usuario.is_active else 'desactivado'
+            return JsonResponse({
+                'mensaje': f'Usuario {status_message} correctamente',
+                'is_active': usuario.is_active
+            }, status=200)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
     return JsonResponse({'error': 'Método no permitido'}, status=405)

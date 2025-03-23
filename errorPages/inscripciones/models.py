@@ -1,8 +1,10 @@
+import uuid
 from django.db import models
-from usuarios.models import Usuario  
-from cursos.models import Curso      
+from usuarios.models import Usuario
+from cursos.models import Curso
 
 class Inscripcion(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='inscripciones')
     curso = models.ForeignKey(Curso, on_delete=models.CASCADE, related_name='inscripciones')
     fecha_inscripcion = models.DateTimeField(auto_now_add=True)
