@@ -1,0 +1,32 @@
+- model: usuarios.Usuario
+  pk: "550e8400-e29b-41d4-a716-446655440000"  # UUID for admin
+  fields:
+    username: admin
+    password: pbkdf2_sha256$870000$P7LpW3JWaWNXR7xNo49bzL$MaNlQr2HE/qVRiAkgVv137wBwILFQiR21Ga2/st14/8=  # Django's hashed version of 'admin123'
+    nombre_completo: Administrador del Sistema
+    email: admin@sistema.com
+    rol: admin
+    token: ''
+    fecha_creacion: "2024-03-10T00:00:00Z"
+
+- model: usuarios.Usuario
+  pk: "6ba7b810-9dad-11d1-80b4-00c04fd430c8"  # UUID for teacher
+  fields:
+    username: teacher
+    password: pbkdf2_sha256$870000$8tvl0e3zbVIS1bBFGiy6pr$Kwf/uVmlTOtTwcGqjEkp1YSQD/2g9gemhMzvC52Cxso=  # Django's hashed version of 'teacher123'
+    nombre_completo: Profesor Demo
+    email: teacher@sistema.com
+    rol: teacher
+    token: ''
+    fecha_creacion: "2024-03-10T00:00:00Z"
+
+- model: usuarios.Usuario
+  pk: "7c9e6679-7425-40de-944b-e07fc1f90ae7"  # UUID for student
+  fields:
+    username: student
+    password:  pbkdf2_sha256$870000$vnXlnUQkCoHfiIXM0lX4fE$6rsMhEay8LaWe5aTIoXxjD8xmYWrc5qneGMl51GXCz8= # Django's hashed version of 'student123'
+    nombre_completo: Estudiante Demo
+    email: student@sistema.com
+    rol: student
+    token: ''
+    fecha_creacion: "2024-03-10T00:00:00Z"
