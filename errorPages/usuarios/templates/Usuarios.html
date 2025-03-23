@@ -1,0 +1,111 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Usuarios</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+    <header class="bg-primary text-white text-center p-3"> Gestión de Usuarios</header>
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-6">
+                <h3>Formulario de Usuario</h3>
+                <form id="usuarioForm">
+                    <input type="hidden" id="usuarioId">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Nombre de Usuario:</label>
+                        <input type="text" class="form-control" id="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Contraseña:</label>
+                        <input type="password" class="form-control" id="password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="nombre_completo" class="form-label">Nombre Completo:</label>
+                        <input type="text" class="form-control" id="nombre_completo" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Correo:</label>
+                        <input type="email" class="form-control" id="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="rol" class="form-label">Rol:</label>
+                        <input type="text" class="form-control" id="rol" required>
+                    </div>
+                    <button type="submit" class="btn btn-success">Guardar</button>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <h3>Lista de Usuarios</h3>
+                <ul id="listaUsuarios" class="list-group"></ul>
+            </div>
+        </div>
+    </div>
+    <footer class="bg-primary text-white text-center p-3 mt-4"> Hola buenas, bienvenido al sistema de usuarios</footer>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            obtenerUsuarios();
+            document.getElementById("usuarioForm").addEventListener("submit", enviarFormulario);
+        });
+
+        async function obtenerUsuarios() {
+            const response = await fetch("/usuarios/api/");
+            const usuarios = await response.json();
+            const lista = document.getElementById("listaUsuarios");
+            lista.innerHTML = "";
+            usuarios.forEach(usuario => {
+                const li = document.createElement("li");
+                li.classList.add("list-group-item", "d-flex", "justify-content-between", "align-items-center");
+                li.innerHTML = `${usuario.username} - ${usuario.nombre_completo} - ${usuario.email} - ${usuario.rol}
+                    <span>
+                        <button class='btn btn-warning btn-sm' onclick='editarUsuario(${JSON.stringify(usuario)})'>✏️</button>
+                        <button class='btn btn-danger btn-sm' onclick='eliminarUsuario(${usuario.id})'>🗑️</button>
+                    </span>`;
+                lista.appendChild(li);
+            });
+        }
+
+        async function enviarFormulario(event) {
+            event.preventDefault();
+            const id = document.getElementById("usuarioId").value;
+            const usuario = {
+                username: document.getElementById("username").value,
+                password: document.getElementById("password").value,
+                nombre_completo: document.getElementById("nombre_completo").value,
+                email: document.getElementById("email").value,
+                rol: document.getElementById("rol").value
+            };
+            const method = id ? "PUT" : "POST";
+            const url = id ? `/usuarios/api/${id}/` : "/usuarios/api/";
+            await fetch(url, {
+                method: method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(usuario)
+            });
+            document.getElementById("usuarioForm").reset();
+            document.getElementById("usuarioId").value = "";
+            obtenerUsuarios();
+        }
+
+        function editarUsuario(usuario) {
+            document.getElementById("usuarioId").value = usuario.id;
+            document.getElementById("username").value = usuario.username;
+            document.getElementById("password").value = usuario.password;
+            document.getElementById("nombre_completo").value = usuario.nombre_completo;
+            document.getElementById("email").value = usuario.email;
+            document.getElementById("rol").value = usuario.rol;
+        }
+
+        async function eliminarUsuario(id) {
+            if (confirm("¿Seguro que deseas eliminar este usuario?")) {
+                await fetch(`/usuarios/api/${id}/`, { method: "DELETE" });
+                obtenerUsuarios();
+            }
+        }
+    </script>
+</body>
+</html>
