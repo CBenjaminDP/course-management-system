@@ -5,8 +5,14 @@ from .models import Unidad
 from .forms import UnidadForm
 from django.shortcuts import redirect
 from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
+from cursos.models import Curso  # Agrega esta importación
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 
 #Metodo que devuelve el JSON
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def listar_unidades(request):
     #Obtener todas la instancias del objeto de la BD
     unidades = Unidad.objects.all()
@@ -15,14 +21,20 @@ def listar_unidades(request):
         {
             'id': unidad.id,
             'nombre': unidad.nombre,
-            'curso': unidad.curso,
+            'curso': {
+                'id': unidad.curso.id,
+                'nombre': unidad.curso.nombre
+            },
             'orden': unidad.orden
-        } 
+        }
         for unidad in unidades
     ]
     return JsonResponse(data, safe=False)
 
 #Funcion que registre sin recargar la pagina osea sin hacer render
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def registrar_unidad(request):
     #checar que estemos manejando un metodo POST
     if request.method == 'POST':
@@ -30,20 +42,25 @@ def registrar_unidad(request):
         try:
             #Obtener los datos del request
             data = json.loads(request.body)
-            #Crear una instancia de la clase Unidad
+            # Obtener la instancia de Curso usando el ID proporcionado
+            curso_instance = Curso.objects.get(id=data['curso'])
+            # Crear la instancia de Unidad con la instancia de Curso
             unidad = Unidad.objects.create(
                 nombre=data['nombre'],
-                curso=data['curso'],
+                curso=curso_instance,  # Usar la instancia de Curso aquí
                 orden=data['orden']
             )
-            #Retornar un mensaje de exito
             return JsonResponse({'mensaje': 'Unidad creada correctamente', 'id': unidad.id}, status=201)
+        except Curso.DoesNotExist:
+            return JsonResponse({'error': 'Curso no encontrado'}, status=404)
         except Exception as e:
-            #Retornar un mensaje de error
             return JsonResponse({'error': str(e)}, status=400)
     return JsonResponse({'error': 'Método no permitido'}, status=405)
 
 #Funcion que actualiza sin recargar la pagina osea sin hacer render
+@csrf_exempt  # Add this decorator
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def actualizar_unidad(request, id):
     #checar que estemos manejando un metodo PUT
     if request.method == 'PUT':
@@ -54,18 +71,25 @@ def actualizar_unidad(request, id):
         try:
             #2) Obtener los datos del body request
             data = json.loads(request.body)
-            #3) Actualizar cada campo disponible de la entidad 
+            #3) Obtener la instancia de Curso usando el ID proporcionado
+            curso_instance = Curso.objects.get(id=data['curso'])
+            #4) Actualizar cada campo disponible de la entidad 
             unidad.nombre = data['nombre']
-            unidad.curso = data['curso']
+            unidad.curso = curso_instance  # Usar la instancia de Curso aquí
             unidad.orden = data['orden']
             unidad.save()  # Se agregó para asegurar que los cambios se guarden en la BD
 
             return JsonResponse({'mensaje': 'Unidad actualizada correctamente'}, status=200)
+        except Curso.DoesNotExist:
+            return JsonResponse({'error': 'Curso no encontrado'}, status=404)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
     return JsonResponse({'error': 'Método no permitido'}, status=405)
 
 #Funcion que elimina sin recargar la pagina osea sin hacer render
+@csrf_exempt  # Add this decorator
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def eliminar_unidad(request, id):
     #checar que estemos manejando un metodo DELETE
     if request.method == 'DELETE':
@@ -83,6 +107,9 @@ def eliminar_unidad(request, id):
     return JsonResponse({'error': 'Método no permitido'}, status=405)
 
 #Funcion que obtiene un objeto sin recargar la pagina osea sin hacer render
+@csrf_exempt  # Add this decorator
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def obtener_unidad(request, id):
     #checar que estemos manejando un metodo GET
     if request.method == 'GET':
@@ -94,7 +121,7 @@ def obtener_unidad(request, id):
             data = {
                 'id': unidad.id,
                 'nombre': unidad.nombre,
-                'curso': unidad.curso,
+                'curso': unidad.curso.id,  # Use curso.id instead of curso object
                 'orden': unidad.orden
             }
             #3) Retornar un JSON

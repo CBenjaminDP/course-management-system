@@ -4,18 +4,21 @@ from django.http import JsonResponse
 from .models import Inscripcion
 from .forms import InscripcionForm
 from django.shortcuts import redirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 
 #Metodo que devuelve el JSON
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def listar_inscripciones(request):
-    #Obtener todas la instancias del objeto de la BD
     inscripciones = Inscripcion.objects.all()
-    #Crear una variable en formato de diccionario por que le JSONResponse necesita un diccionario
     data = [
         {
             'id': inscripcion.id,
-            'id_curso': inscripcion.id_curso,
-            'id_usuario': inscripcion.id_usuario,
+            'id_curso': inscripcion.curso.id,  # Access the related curso's id
+            'id_usuario': inscripcion.usuario.id,  # Access the related usuario's id
             'fecha_inscripcion': inscripcion.fecha_inscripcion
         } 
         for inscripcion in inscripciones
@@ -23,27 +26,35 @@ def listar_inscripciones(request):
     return JsonResponse(data, safe=False)
 
 #Funcion que registre sin recargar la pagina osea sin hacer render 
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def registrar_inscripcion(request):
-    #checar que estemos manejando un metodo POST
     if request.method == 'POST':
-        #aqui se puede validar si hay sesion antes de hacer el registro
         try:
-            #Obtener los datos del request
             data = json.loads(request.body)
-            #Crear una instancia de la clase Inscripcion
+            
+            # Get the related objects
+            from cursos.models import Curso
+            from usuarios.models import Usuario
+            curso = get_object_or_404(Curso, id=data['id_curso'])
+            usuario = get_object_or_404(Usuario, id=data['id_usuario'])
+            
+            # Create the inscription with proper foreign key relationships
             inscripcion = Inscripcion.objects.create(
-                id_curso=data['id_curso'],
-                id_usuario=data['id_usuario'],
+                curso=curso,
+                usuario=usuario,
                 fecha_inscripcion=data['fecha_inscripcion']
             )
-            #Retornar un mensaje de exito
             return JsonResponse({'mensaje': 'Inscripcion creada correctamente', 'id': inscripcion.id}, status=201)
         except Exception as e:
-            #Retornar un mensaje de error
             return JsonResponse({'error': str(e)}, status=400)
     return JsonResponse({'error': 'Método no permitido'}, status=405)
 
 #Funcion que actualiza sin recargar la pagina osea sin hacer render 
+@csrf_exempt
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def actualizar_inscripcion(request, id):
     #checar que estemos manejando un metodo PUT
     if request.method == 'PUT':
@@ -69,6 +80,9 @@ def actualizar_inscripcion(request, id):
 
 
 #Funcion que elimina sin recargar la pagina osea sin hacer render
+@csrf_exempt
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def eliminar_inscripcion(request, id):
     #checar que estemos manejando un metodo DELETE
     if request.method == 'DELETE':
@@ -87,6 +101,8 @@ def eliminar_inscripcion(request, id):
     return JsonResponse({'error': 'Método no permitido'}, status=405)
 
 #Funcion que obtiene un objeto sin recargar la pagina osea sin hacer render
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def obtener_inscripcion(request, id):
     #checar que estemos manejando un metodo GET
     if request.method == 'GET':
@@ -98,8 +114,8 @@ def obtener_inscripcion(request, id):
             #2) Crear un diccionario con los datos de la entidad
             data = {
                 'id': inscripcion.id,
-                'id_curso': inscripcion.id_curso,
-                'id_usuario': inscripcion.id_usuario,
+                'id_curso': inscripcion.curso.id,  # Access the related curso's id
+                'id_usuario': inscripcion.usuario.id,  # Access the related usuario's id
                 'fecha_inscripcion': inscripcion.fecha_inscripcion
             }
             #3) Retornar un JSON
