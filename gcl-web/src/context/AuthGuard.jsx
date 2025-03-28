@@ -7,20 +7,17 @@ const AuthGuard = ({ children }) => {
   const router = useRouter();
 
   useEffect(() => {
-    // Solo redirigir si el usuario está definido (ya se verificó su estado)
     if (user !== undefined) {
-      // Si el usuario no está autenticado y no estamos en login o index
       if (user === null && !['/login', '/'].includes(window.location.pathname)) {
         router.push('/login');
       }
-      // Si el usuario está autenticado y estamos en login
-      if (user && window.location.pathname === '/login') {
-        router.push('/');
+      // If user is authenticated and in login or root path, redirect to dashboard
+      if (user && ['/login', '/'].includes(window.location.pathname)) {
+        router.push('/dashboard');
       }
     }
-  }, [user]);
+  }, [user, router]);
 
-  // Mostrar los children solo si el usuario está autenticado o estamos en la página de login
   return children;
 };
 
