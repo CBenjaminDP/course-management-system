@@ -21,7 +21,7 @@ export const MENU_OPTIONS = {
       url: "/admin/manage/configuration",
     },
   ],
-  profesor: [
+  teacher: [
     {
       label: "Mis Cursos",
       url: "/teacher/courses",
@@ -35,18 +35,22 @@ export const MENU_OPTIONS = {
       url: "/teacher/assignments",
     },
   ],
-  alumno: [
+  student: [
     {
       label: "Mis Cursos",
-      url: "/alumno/courses",
+      url: "/student/courses",
     },
     {
       label: "Tareas Pendientes",
-      url: "/alumno/assignments",
+      url: "/student/assignments",
     },
     {
       label: "Calificaciones",
-      url: "/alumno/grades",
+      url: "/student/grades",
+    },
+    {
+      label: "Cursos Aprobados",
+      url: "/student/passed-courses",
     },
   ],
 };
@@ -54,6 +58,7 @@ export const MENU_OPTIONS = {
 export const PROTECTED_ROUTES = {
   admin: [
     "/",
+    "/dashboard",
     "/admin/manage/users",
     "/admin/manage/users/profesores",
     "/admin/manage/users/alumnos",
@@ -62,15 +67,17 @@ export const PROTECTED_ROUTES = {
     "/admin/manage/courses/all",
     "/admin/manage/courses/enrollments",
   ],
-  profesor: [
+  teacher: [
     "/",
+    "/dashboard",
     "/profesor/courses",
     "/profesor/courses/manage",
     "/profesor/courses/grades",
     "/profesor/assignments",
   ],
-  alumno: [
+  student: [
     "/",
+    "/dashboard",
     "/alumno/courses",
     "/alumno/assignments",
     "/alumno/grades",

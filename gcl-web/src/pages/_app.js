@@ -1,4 +1,4 @@
-import { AuthorizationProvider } from "../context/AuthorizationProvider";
+import AuthorizationProvider  from "../context/AuthorizationProvider";
 import AuthGuard from "../context/AuthGuard"; // ✅ Importa el AuthGuard corregido
 
 function MyApp({ Component, pageProps }) {

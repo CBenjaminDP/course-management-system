@@ -8,11 +8,20 @@ const DashboardLayout = ({ children }) => {
   const { user, logout } = useContext(AuthContext);
 
   return (
-    <Box sx={{ bgcolor: "#f5f5f7" }}>
+    <Box
+      sx={{
+        display: "flex",
+        minHeight: "100vh",
+        bgcolor: "#f5f5f7",
+        overflow: "hidden",
+      }}
+    >
       <AppBar
         position="fixed"
         elevation={0}
         sx={{
+          width: { sm: `calc(100% - 240px)` },
+          ml: { sm: "240px" },
           bgcolor: "rgba(255, 255, 255, 0.8)",
           backdropFilter: "blur(20px)",
           borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
@@ -50,15 +59,15 @@ const DashboardLayout = ({ children }) => {
         component="main"
         sx={{
           flexGrow: 1,
-          mt: "64px",
-          ml: "240px",
+          p: 3,
+          width: "100%",
           minHeight: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          p: 4,
-          width: `calc(100% - 240px)`,
-          maxWidth: "1600px",
-          margin: "64px auto 0 240px",
+          overflow: "auto",
+          pt: { xs: 8, sm: 9 },
+          pl: { sm: "240px" },
+          "& > *": {
+            maxWidth: "100%",
+          },
         }}
       >
         {children}
