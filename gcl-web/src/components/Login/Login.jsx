@@ -2,23 +2,34 @@
 
 import { useContext, useState } from "react";
 import { AuthContext } from "../../context/AuthorizationProvider";
-import { TextField, Button, Box, Typography, Link, IconButton, InputAdornment, Divider, Stack, FormControl, FormLabel, Checkbox, FormControlLabel } from "@mui/material";
+import {
+  TextField,
+  Button,
+  Box,
+  Typography,
+  Link,
+  IconButton,
+  InputAdornment,
+  Divider,
+  Stack,
+  FormControl,
+  FormLabel,
+  Checkbox,
+  FormControlLabel,
+} from "@mui/material";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import Image from "next/image";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import { styled } from '@mui/material/styles';
-import MuiCard from '@mui/material/Card';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { styled } from "@mui/material/styles";
+import MuiCard from "@mui/material/Card";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 // Esquema de validación con Yup
 const validationSchema = Yup.object({
-  height: '100vh',
-  minHeight: '100%',
-  email: Yup.string()
-    .email("Correo inválido")
-    .required("El correo es obligatorio"),
+  username: Yup.string()
+    .required("El nombre de usuario es obligatorio"),
   password: Yup.string()
     .min(8, "La contraseña debe tener al menos 8 caracteres")
     .matches(/[a-zA-Z]/, "Debe contener al menos una letra")
@@ -27,41 +38,41 @@ const validationSchema = Yup.object({
 });
 
 const Card = styled(MuiCard)(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignSelf: 'center',
-  width: '100%',
+  display: "flex",
+  flexDirection: "column",
+  alignSelf: "center",
+  width: "100%",
   padding: theme.spacing(4),
   gap: theme.spacing(2),
-  margin: 'auto',
-  [theme.breakpoints.up('sm')]: {
-    maxWidth: '450px',
+  margin: "auto",
+  [theme.breakpoints.up("sm")]: {
+    maxWidth: "450px",
   },
   boxShadow:
-    'hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px',
-  ...theme.applyStyles('dark', {
+    "hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px",
+  ...theme.applyStyles("dark", {
     boxShadow:
-      'hsla(220, 30%, 5%, 0.5) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.08) 0px 15px 35px -5px',
+      "hsla(220, 30%, 5%, 0.5) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.08) 0px 15px 35px -5px",
   }),
 }));
 
 const SignInContainer = styled(Stack)(({ theme }) => ({
   padding: theme.spacing(2),
-  [theme.breakpoints.up('sm')]: {
+  [theme.breakpoints.up("sm")]: {
     padding: theme.spacing(4),
   },
-  '&::before': {
+  "&::before": {
     content: '""',
-    display: 'block',
-    position: 'absolute',
+    display: "block",
+    position: "absolute",
     zIndex: -1,
     inset: 0,
     backgroundImage:
-      'radial-gradient(ellipse at 50% 50%, hsl(210, 100%, 97%), hsl(0, 0%, 100%))',
-    backgroundRepeat: 'no-repeat',
-    ...theme.applyStyles('dark', {
+      "radial-gradient(ellipse at 50% 50%, hsl(210, 100%, 97%), hsl(0, 0%, 100%))",
+    backgroundRepeat: "no-repeat",
+    ...theme.applyStyles("dark", {
       backgroundImage:
-        'radial-gradient(at 50% 50%, hsla(210, 100%, 16%, 0.5), hsl(220, 30%, 5%))',
+        "radial-gradient(at 50% 50%, hsla(210, 100%, 16%, 0.5), hsl(220, 30%, 5%))",
     }),
   },
 }));
@@ -72,13 +83,13 @@ const LoginForm = () => {
 
   const formik = useFormik({
     initialValues: {
-      email: "",
+      username: "",
       password: "",
     },
     validationSchema,
     onSubmit: async (values, { setSubmitting, setErrors }) => {
       try {
-        await login(values.email, values.password);
+        await login(values.username, values.password);
       } catch (error) {
         setErrors({ password: "Usuario o contraseña incorrectos." });
       }
@@ -100,27 +111,26 @@ const LoginForm = () => {
       <Button
         startIcon={<ArrowBackIcon />}
         onClick={handleGoBack}
-        sx={{ alignSelf: 'flex-start', mb: 2 }}
+        sx={{ alignSelf: "flex-start", mb: 2 }}
       >
         Regresar al inicio
       </Button>
 
       <Card variant="outlined">
         {/* Logo */}
-        <Box sx={{ mb: 0, textAlign: 'center' }}>
-          <Image
-            src="/logo.png"
-            alt="Logo"
-            width={180}
-            height={180}
-          />
+        <Box sx={{ mb: 0, textAlign: "center" }}>
+          <Image src="/logo.png" alt="Logo" width={180} height={180} />
         </Box>
 
         {/* Título */}
         <Typography
           component="h1"
           variant="h4"
-          sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)', textAlign: 'center' }}
+          sx={{
+            width: "100%",
+            fontSize: "clamp(2rem, 10vw, 2.15rem)",
+            textAlign: "center",
+          }}
         >
           Iniciar sesión
         </Typography>
@@ -130,26 +140,25 @@ const LoginForm = () => {
           onSubmit={formik.handleSubmit}
           noValidate
           sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            width: '100%',
+            display: "flex",
+            flexDirection: "column",
+            width: "100%",
             gap: 2,
           }}
         >
-          {/* Campo de Correo */}
+          {/* Campo de Usuario */}
           <FormControl>
-            <FormLabel htmlFor="email">Correo electrónico</FormLabel>
+            <FormLabel htmlFor="username">Nombre de usuario</FormLabel>
             <TextField
-              id="email"
-              type="email"
-              name="email"
-              placeholder="correo electrónico"
-              autoComplete="email"
+              id="username"
+              name="username"
+              placeholder="Nombre de usuario"
+              autoComplete="username"
               fullWidth
               variant="outlined"
-              {...formik.getFieldProps("email")}
-              error={formik.touched.email && Boolean(formik.errors.email)}
-              helperText={formik.touched.email && formik.errors.email}
+              {...formik.getFieldProps("username")}
+              error={formik.touched.username && Boolean(formik.errors.username)}
+              helperText={formik.touched.username && formik.errors.username}
             />
           </FormControl>
 
@@ -204,7 +213,7 @@ const LoginForm = () => {
             component="button"
             type="button"
             variant="body2"
-            sx={{ alignSelf: 'center' }}
+            sx={{ alignSelf: "center" }}
           >
             Olvidé mi contraseña
           </Link>
@@ -214,13 +223,9 @@ const LoginForm = () => {
         <Divider>o</Divider>
 
         {/* Enlace para registrarse */}
-        <Typography sx={{ textAlign: 'center', mt: 2 }}>
+        <Typography sx={{ textAlign: "center", mt: 2 }}>
           ¿No tienes una cuenta?{" "}
-          <Link
-            href="/registro"
-            variant="body2"
-            sx={{ alignSelf: 'center' }}
-          >
+          <Link href="/registro" variant="body2" sx={{ alignSelf: "center" }}>
             Regístrate
           </Link>
         </Typography>
