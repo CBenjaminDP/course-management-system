@@ -24,7 +24,7 @@ export const MENU_OPTIONS = {
   teacher: [
     {
       label: "Mis Cursos",
-      url: "/teacher/courses",
+      url: "/teacher/assignments/courses/manage",
       subPages: [
         { label: "Gestionar", url: "/teacher/courses/manage" },
         { label: "Calificaciones", url: "/teacher/courses/grades" },
