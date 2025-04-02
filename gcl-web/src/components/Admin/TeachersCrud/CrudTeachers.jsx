@@ -13,6 +13,7 @@ import {
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ModalCreateTeacher from "./ModalCreateTeacher";
+// Crea un crud funcional para el apartado de profesores
 
 const CrudTeachers = () => {
   const [teachers, setTeachers] = useState([
@@ -42,7 +43,7 @@ const CrudTeachers = () => {
         variant="contained"
         onClick={() => setOpenModal(true)}
         sx={{
-          mb: 3,
+          mb: 0,
           bgcolor: "#1a1a1a",
           "&:hover": {
             bgcolor: "#333",
