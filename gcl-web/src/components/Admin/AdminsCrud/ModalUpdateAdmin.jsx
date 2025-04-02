@@ -1,19 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box, Modal, TextField, Button, Typography, IconButton, InputAdornment
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 
-const ModalCreateAdmin = ({ open, handleClose, handleCreate }) => {
+const ModalUpdateAdmin = ({ open, handleClose, admin, handleUpdate }) => {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
-    confirmPassword: '',
     nombre_completo: '',
-    email: ''
+    email: '',  // Make sure email is initialized
+    rol: 'admin'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (admin) {
+      setFormData({
+        username: admin.username,
+        password: '',
+        nombre_completo: admin.nombre_completo,
+        email: admin.email,
+        rol: admin.rol
+      });
+    }
+  }, [admin]);
 
   const handleChange = (e) => {
     setFormData({
@@ -25,10 +37,6 @@ const ModalCreateAdmin = ({ open, handleClose, handleCreate }) => {
   const handleSubmit = () => {
     const newErrors = {};
     if (!formData.username) newErrors.username = 'Username is required';
-    if (!formData.password) newErrors.password = 'Password is required';
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
     if (!formData.nombre_completo) newErrors.nombre_completo = 'Full name is required';
     if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Valid email is required';
@@ -39,7 +47,7 @@ const ModalCreateAdmin = ({ open, handleClose, handleCreate }) => {
       return;
     }
 
-    handleCreate(formData);
+    handleUpdate(admin.id, formData);
     handleClose();
   };
 
@@ -56,7 +64,7 @@ const ModalCreateAdmin = ({ open, handleClose, handleCreate }) => {
         p: 4,
         borderRadius: 2
       }}>
-        <Typography variant="h6" mb={2}>Create New Admin</Typography>
+        <Typography variant="h6" mb={2}>Update Admin</Typography>
 
         <TextField
           fullWidth
@@ -71,13 +79,34 @@ const ModalCreateAdmin = ({ open, handleClose, handleCreate }) => {
 
         <TextField
           fullWidth
+          label="Full Name"
+          name="nombre_completo" // Fixed: Added missing closing quote
+          value={formData.nombre_completo}
+          onChange={handleChange}
+          error={!!errors.nombre_completo}
+          helperText={errors.nombre_completo}
+          margin="normal" // Fixed: Changed from {normal} to "normal"
+        />
+
+        <TextField
+          fullWidth
+          label="Email"
+          name="email"
+          type="email"
+          value={formData.email}
+          onChange={handleChange}
+          error={!!errors.email}
+          helperText={errors.email}
+          margin="normal"
+        />
+
+        <TextField
+          fullWidth
           label="Password"
           name="password"
           type={showPassword ? 'text' : 'password'}
           value={formData.password}
           onChange={handleChange}
-          error={!!errors.password}
-          helperText={errors.password}
           margin="normal"
           InputProps={{
             endAdornment: (
@@ -93,48 +122,13 @@ const ModalCreateAdmin = ({ open, handleClose, handleCreate }) => {
           }}
         />
 
-        <TextField
-          fullWidth
-          label="Confirm Password"
-          name="confirmPassword"
-          type={showPassword ? 'text' : 'password'}
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          error={!!errors.confirmPassword}
-          helperText={errors.confirmPassword}
-          margin="normal"
-        />
-
-        <TextField
-          fullWidth
-          label="Full Name"
-          name="nombre_completo"
-          value={formData.nombre_completo}
-          onChange={handleChange}
-          error={!!errors.nombre_completo}
-          helperText={errors.nombre_completo}
-          margin="normal"
-        />
-
-        <TextField
-          fullWidth
-          label="Email"
-          name="email"
-          type="email"
-          value={formData.email}
-          onChange={handleChange}
-          error={!!errors.email}
-          helperText={errors.email}
-          margin="normal"
-        />
-
         <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
           <Button onClick={handleClose}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmit}>Create</Button>
+          <Button variant="contained" onClick={handleSubmit}>Update</Button>
         </Box>
       </Box>
     </Modal>
   );
 };
 
-export default ModalCreateAdmin;
+export default ModalUpdateAdmin;
