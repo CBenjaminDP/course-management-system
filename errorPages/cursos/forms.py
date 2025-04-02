@@ -2,13 +2,9 @@ from django import forms
 from .models import Curso
 
 class CursoForm(forms.ModelForm):
-    #Definir los metadatos de la clase
     class Meta:
-        #Definir el modelo al que pertenece el formulario
         model = Curso
-        #Definir los campos del modelo que se van a mostrar en el formulario
-        fields = ['nombre', 'descripcion', 'profesor', 'fecha_inicio', 'fecha_fin', 'estado']
-        #Definir los atributos de los campos del formulario
+        fields = ['nombre', 'descripcion', 'profesor', 'fecha_inicio', 'fecha_fin', 'estado', 'imagen_url']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del curso'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Descripción del curso'}),
@@ -16,9 +12,8 @@ class CursoForm(forms.ModelForm):
             'fecha_inicio': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'fecha_fin': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'estado': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'imagen_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'URL de la imagen'}),
         }
-
-        #Personalizar las etiquetas o los textos que salen a lado de los inputs del formulario
         labels = {
             'nombre': 'Nombre',
             'descripcion': 'Descripción',
@@ -26,6 +21,7 @@ class CursoForm(forms.ModelForm):
             'fecha_inicio': 'Fecha de inicio',
             'fecha_fin': 'Fecha de fin',
             'estado': 'Estado',
+            'imagen_url': 'URL de la imagen',
         }
 
         #Personalizar los mensajes de error de los campos del formulario
