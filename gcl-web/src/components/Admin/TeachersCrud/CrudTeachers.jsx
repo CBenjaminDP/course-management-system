@@ -192,7 +192,7 @@ const CrudTeachers = () => {
         variant="contained"
         onClick={() => setOpenModal(true)}
         sx={{
-          mb: 2,
+          mb: 0,
           bgcolor: "#1a1a1a",
           "&:hover": {
             bgcolor: "#333",
