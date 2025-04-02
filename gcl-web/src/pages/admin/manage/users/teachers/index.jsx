@@ -13,11 +13,11 @@ const TeachersManagement = () => {
   return (
     <DashboardLayout>
       <Container maxWidth="lg">
-        <Box sx={{ py: 3 }}>
+        <Box sx={{ py: 0 }}>
           <Typography variant="h4" gutterBottom>
             Gestión de Profesores
           </Typography>
-          <Box sx={{ mt: 3 }}>
+          <Box sx={{ mt: 0 }}>
             <Tabs
               value={selectedTab}
               onChange={handleTabChange}
@@ -27,7 +27,7 @@ const TeachersManagement = () => {
             >
               <Tab label="Listado de Profesores" value="teachers" />
             </Tabs>
-            <Box sx={{ pt: 3 }}>
+            <Box sx={{ pt: 0 }}>
               {selectedTab === "teachers" && <CrudTeachers />}
             </Box>
           </Box>

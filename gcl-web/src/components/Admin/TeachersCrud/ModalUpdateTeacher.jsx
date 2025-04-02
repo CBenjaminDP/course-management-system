@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Modal,
@@ -10,16 +10,28 @@ import {
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 
-const ModalCreateTeacher = ({ open, handleClose, handleCreate }) => {
+const ModalUpdateTeacher = ({ open, handleClose, teacher, handleUpdate }) => {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
-    confirmPassword: '',
     nombre_completo: '',
-    email: ''
+    email: '',
+    rol: 'teacher'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (teacher) {
+      setFormData({
+        username: teacher.username,
+        password: '',
+        nombre_completo: teacher.nombre_completo,
+        email: teacher.email,
+        rol: teacher.rol
+      });
+    }
+  }, [teacher]);
 
   const handleChange = (e) => {
     setFormData({
@@ -29,13 +41,8 @@ const ModalCreateTeacher = ({ open, handleClose, handleCreate }) => {
   };
 
   const handleSubmit = () => {
-    // Basic validation
     const newErrors = {};
     if (!formData.username) newErrors.username = 'Username is required';
-    if (!formData.password) newErrors.password = 'Password is required';
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
     if (!formData.nombre_completo) newErrors.nombre_completo = 'Full name is required';
     if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Valid email is required';
@@ -46,16 +53,7 @@ const ModalCreateTeacher = ({ open, handleClose, handleCreate }) => {
       return;
     }
 
-    // Create teacher object
-    const newTeacher = {
-      username: formData.username,
-      password: formData.password,
-      nombre_completo: formData.nombre_completo,
-      email: formData.email,
-      rol: 'teacher'
-    };
-
-    handleCreate(newTeacher);
+    handleUpdate(teacher.id, formData);
     handleClose();
   };
 
@@ -72,7 +70,7 @@ const ModalCreateTeacher = ({ open, handleClose, handleCreate }) => {
         p: 4,
         borderRadius: 2
       }}>
-        <Typography variant="h6" mb={2}>Create New Teacher</Typography>
+        <Typography variant="h6" mb={2}>Update Teacher</Typography>
 
         <TextField
           fullWidth
@@ -82,42 +80,6 @@ const ModalCreateTeacher = ({ open, handleClose, handleCreate }) => {
           onChange={handleChange}
           error={!!errors.username}
           helperText={errors.username}
-          margin="normal"
-        />
-
-        <TextField
-          fullWidth
-          label="Password"
-          name="password"
-          type={showPassword ? 'text' : 'password'}
-          value={formData.password}
-          onChange={handleChange}
-          error={!!errors.password}
-          helperText={errors.password}
-          margin="normal"
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  onClick={() => setShowPassword(!showPassword)}
-                  edge="end"
-                >
-                  {showPassword ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            )
-          }}
-        />
-
-        <TextField
-          fullWidth
-          label="Confirm Password"
-          name="confirmPassword"
-          type={showPassword ? 'text' : 'password'}
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          error={!!errors.confirmPassword}
-          helperText={errors.confirmPassword}
           margin="normal"
         />
 
@@ -144,13 +106,52 @@ const ModalCreateTeacher = ({ open, handleClose, handleCreate }) => {
           margin="normal"
         />
 
+        <TextField
+          fullWidth
+          label="Password"
+          name="password"
+          type={showPassword ? 'text' : 'password'}
+          value={formData.password}
+          onChange={handleChange}
+          margin="normal"
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  onClick={() => setShowPassword(!showPassword)}
+                  edge="end"
+                >
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            )
+          }}
+        />
+
+        <TextField
+          fullWidth
+          label="Role"
+          name="rol"
+          value={formData.rol}
+          onChange={handleChange}
+          margin="normal"
+          select
+          SelectProps={{
+            native: true,
+          }}
+        >
+          <option value="teacher">Teacher</option>
+          <option value="estudiante">Estudiante</option>
+          <option value="admin">Admin</option>
+        </TextField>
+
         <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
           <Button onClick={handleClose}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmit}>Create</Button>
+          <Button variant="contained" onClick={handleSubmit}>Update</Button>
         </Box>
       </Box>
     </Modal>
   );
 };
 
-export default ModalCreateTeacher;
+export default ModalUpdateTeacher;
