@@ -1,16 +1,10 @@
 import React, { useState } from 'react';
 import {
-  Box,
-  Modal,
-  TextField,
-  Button,
-  Typography,
-  IconButton,
-  InputAdornment
+  Box, Modal, TextField, Button, Typography, IconButton, InputAdornment
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 
-const ModalCreateTeacher = ({ open, handleClose, handleCreate }) => {
+const ModalCreateStudent = ({ open, handleClose, handleCreate }) => {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -29,7 +23,6 @@ const ModalCreateTeacher = ({ open, handleClose, handleCreate }) => {
   };
 
   const handleSubmit = () => {
-    // Basic validation
     const newErrors = {};
     if (!formData.username) newErrors.username = 'Username is required';
     if (!formData.password) newErrors.password = 'Password is required';
@@ -46,16 +39,7 @@ const ModalCreateTeacher = ({ open, handleClose, handleCreate }) => {
       return;
     }
 
-    // Create teacher object
-    const newTeacher = {
-      username: formData.username,
-      password: formData.password,
-      nombre_completo: formData.nombre_completo,
-      email: formData.email,
-      rol: 'teacher'
-    };
-
-    handleCreate(newTeacher);
+    handleCreate(formData);
     handleClose();
   };
 
@@ -72,7 +56,7 @@ const ModalCreateTeacher = ({ open, handleClose, handleCreate }) => {
         p: 4,
         borderRadius: 2
       }}>
-        <Typography variant="h6" mb={2}>Create New Teacher</Typography>
+        <Typography variant="h6" mb={2}>Create New Student</Typography>
 
         <TextField
           fullWidth
@@ -153,4 +137,4 @@ const ModalCreateTeacher = ({ open, handleClose, handleCreate }) => {
   );
 };
 
-export default ModalCreateTeacher;
+export default ModalCreateStudent;

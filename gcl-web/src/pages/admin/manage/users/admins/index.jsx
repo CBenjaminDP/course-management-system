@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { Box, Container, Typography, Tabs, Tab } from "@mui/material";
 import DashboardLayout from "../../../../../layouts/DashboardLayout";
-import CrudStudents from "../../../../../components/Admin/StudentsCrud/CrudStudents"; // Ensure this matches
+import CrudAdmins from "../../../../../components/Admin/AdminsCrud/CrudAdmins";
 
-const StudentsManagement = () => {
-  const [selectedTab, setSelectedTab] = useState("students");
+const AdminsManagement = () => {
+  const [selectedTab, setSelectedTab] = useState("admins");
 
   const handleTabChange = (_, newValue) => {
     setSelectedTab(newValue);
@@ -15,7 +15,7 @@ const StudentsManagement = () => {
       <Container maxWidth="lg">
         <Box sx={{ py: 0 }}>
           <Typography variant="h4" gutterBottom>
-            Gestión de Estudiantes
+            Gestión de Administradores
           </Typography>
           <Box sx={{ mt: 0 }}>
             <Tabs
@@ -25,10 +25,10 @@ const StudentsManagement = () => {
               textColor="primary"
               sx={{ borderBottom: 1, borderColor: "divider" }}
             >
-              <Tab label="Listado de Estudiantes" value="students" />
+              <Tab label="Listado de Administradores" value="admins" />
             </Tabs>
             <Box sx={{ pt: 0 }}>
-              {selectedTab === "students" && <CrudStudents />}
+              {selectedTab === "admins" && <CrudAdmins />}
             </Box>
           </Box>
         </Box>
@@ -37,4 +37,4 @@ const StudentsManagement = () => {
   );
 };
 
-export default StudentsManagement;
+export default AdminsManagement;
