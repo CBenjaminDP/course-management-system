@@ -13,7 +13,7 @@ export const MENU_OPTIONS = {
       label: "Cursos",
       url: "/admin/manage/courses",
       subPages: [
-        { label: "Todos", url: "/admin/manage/courses/all" },
+        { label: "Todos", url: "/admin/manage/courses/" },
         { label: "Inscripciones", url: "/admin/manage/courses/enrollments" },
       ],
     },

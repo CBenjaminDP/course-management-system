@@ -4,12 +4,13 @@ import {
   Modal,
   TextField,
   Button,
-  Typography
+  Typography,
+  IconButton,
+  InputAdornment
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { IconButton, InputAdornment } from '@mui/material';
 
-const ModalUpdateTeacher = ({ open, onClose, onUpdate, teacher }) => {
+const ModalUpdateAdmin = ({ open, onClose, onUpdate, admin }) => {
   const [formData, setFormData] = useState({
     username: '',
     nombre_completo: '',
@@ -21,16 +22,16 @@ const ModalUpdateTeacher = ({ open, onClose, onUpdate, teacher }) => {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    if (teacher) {
+    if (admin) {
       setFormData({
-        username: teacher.username,
-        nombre_completo: teacher.nombre_completo,
-        email: teacher.email,
+        username: admin.username,
+        nombre_completo: admin.nombre_completo,
+        email: admin.email,
         password: '',
         confirmPassword: ''
       });
     }
-  }, [teacher]);
+  }, [admin]);
 
   const handleChange = (e) => {
     setFormData({
@@ -67,7 +68,7 @@ const ModalUpdateTeacher = ({ open, onClose, onUpdate, teacher }) => {
       updatedData.password = formData.password;
     }
 
-    onUpdate(teacher.id, updatedData);
+    onUpdate(admin.id, updatedData);
     onClose();
   };
 
@@ -95,7 +96,7 @@ const ModalUpdateTeacher = ({ open, onClose, onUpdate, teacher }) => {
             mb: 2
           }}
         >
-          <Typography variant="h6">Actualizar Profesor</Typography>
+          <Typography variant="h6">Actualizar Administrador</Typography>
         </Box>
         <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
           <TextField
@@ -183,4 +184,4 @@ const ModalUpdateTeacher = ({ open, onClose, onUpdate, teacher }) => {
   );
 };
 
-export default ModalUpdateTeacher;
+export default ModalUpdateAdmin;

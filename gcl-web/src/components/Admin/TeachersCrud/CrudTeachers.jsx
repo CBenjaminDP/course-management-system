@@ -8,6 +8,40 @@ import Cookies from 'js-cookie';
 import axios from 'axios';
 import { tableStyles } from '../../../styles/tableStyles';
 import Swal from 'sweetalert2';
+import { Card, CardHeader, CardContent } from '@mui/material';
+import { Add } from '@mui/icons-material';
+import { Refresh } from '@mui/icons-material';
+
+// Update styles
+const styles = {
+  card: {
+    margin: '24px',
+    boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
+    borderRadius: '12px'
+  },
+  header: {
+    backgroundColor: '#1976d2',
+    color: '#fff',
+    borderRadius: '12px 12px 0 0'
+  },
+  addButton: {
+    margin: '16px',
+    backgroundColor: '#4caf50', // Changed to green
+    borderRadius: '20px',
+    padding: '8px 24px',
+    '&:hover': {
+      backgroundColor: '#388e3c' // Darker green on hover
+    }
+  },
+  refreshButton: {
+    margin: '0 8px',
+    backgroundColor: '#1976d2', // Changed to blue
+    borderRadius: '20px',
+    '&:hover': {
+      backgroundColor: '#1565c0'
+    }
+  }
+};
 
 const CrudTeachers = () => {
   const [teachers, setTeachers] = useState([]);
@@ -17,28 +51,33 @@ const CrudTeachers = () => {
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [openUpdateModal, setOpenUpdateModal] = useState(false);
 
-  useEffect(() => {
-    const fetchTeachers = async () => {
-      try {
-        const token = Cookies.get('accessToken');
-        const response = await axios.get('http://localhost:8000/usuarios/', {  // Changed endpoint
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        
-        // Filter users with role 'teacher'
-        const teachersData = response.data.filter(user => user.rol === 'teacher');
-        setTeachers(teachersData);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchTeachers = async () => {
+    try {
+      const token = Cookies.get('accessToken');
+      const response = await axios.get('http://localhost:8000/usuarios/', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      const teachersData = response.data.filter(user => user.rol === 'teacher');
+      setTeachers(teachersData);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchTeachers();
   }, []);
+
+  const handleRefresh = async () => {
+    setLoading(true);
+    await fetchTeachers();
+  };
 
   const handleCreateTeacher = async (newTeacher) => {
     try {
@@ -79,8 +118,16 @@ const CrudTeachers = () => {
 
   if (error) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, flexDirection: 'column', alignItems: 'center', gap: 2 }}>
         <Typography color="error">Error: {error}</Typography>
+        <Button 
+          variant="contained" 
+          onClick={handleRefresh}
+          sx={styles.refreshButton}
+        >
+          <Refresh style={{ marginRight: '8px' }} />
+          Recargar datos
+        </Button>
       </Box>
     );
   }
@@ -147,7 +194,11 @@ const CrudTeachers = () => {
     }
   };
 
-  const handleEdit = (id) => {
+  const handleCreateClick = () => {
+    setOpenModal(true);
+  };
+
+  const handleEditClick = (id) => {
     const teacher = teachers.find(t => t.id === id);
     setSelectedTeacher(teacher);
     setOpenUpdateModal(true);
@@ -187,79 +238,94 @@ const CrudTeachers = () => {
   };
 
   return (
-    <Box sx={{ width: "100%" }}>
-      <Button
-        variant="contained"
-        onClick={() => setOpenModal(true)}
-        sx={{
-          mb: 0,
-          bgcolor: "#1a1a1a",
-          "&:hover": {
-            bgcolor: "#333",
-          },
-        }}
-      >
-        Add New Teacher
-      </Button>
+    <>
+      <Card sx={styles.card}>
+        <CardHeader
+          title="Gestión de Profesores"
+          titleTypographyProps={{ variant: 'h5' }}
+          sx={styles.header}
+          action={
+            <Box>
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={handleCreateClick} // Changed to use handler
+                sx={styles.addButton}
+              >
+                Agregar Profesor
+              </Button>
+              <IconButton
+                onClick={handleRefresh}
+                sx={styles.refreshButton}
+              >
+                <Refresh style={{ color: '#fff' }} />
+              </IconButton>
+            </Box>
+          }
+        />
+        <CardContent>
+          <TableContainer component={Paper} sx={{ mt: 2 }}>
+            <Table sx={{ minWidth: 650 }} aria-label="teachers table">
+              <TableHead>
+                <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                  <TableCell sx={{ fontWeight: 600, color: '#1a1a1a' }}>Usuario</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#1a1a1a' }}>Nombre Completo</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#1a1a1a' }}>Correo</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#1a1a1a' }}>Rol</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#1a1a1a' }}>Fecha de Creación</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#1a1a1a' }}>Acciones</TableCell>
+                </TableRow>
+              </TableHead>
+              
+              <TableBody>
+                {teachers.map((teacher) => (
+                  <TableRow key={teacher.id} sx={tableStyles.tableRow}>
+                    <TableCell>{teacher.username}</TableCell>
+                    <TableCell>{teacher.nombre_completo}</TableCell>
+                    <TableCell>{teacher.email}</TableCell>
+                    <TableCell>{teacher.rol}</TableCell>
+                    <TableCell>
+                      {new Date(teacher.fecha_creacion).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <IconButton 
+                        size="small" 
+                        sx={{ ...styles.actionButton, color: '#1976d2' }}
+                        onClick={() => handleEditClick(teacher.id)} // Changed to use handler
+                      >
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton 
+                        size="small" 
+                        sx={{ ...styles.actionButton, color: '#d32f2f' }}
+                        onClick={() => handleDelete(teacher.id)}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
+      </Card>
 
+      {/* Modal for creating teacher */}
       <ModalCreateTeacher
         open={openModal}
-        handleClose={() => setOpenModal(false)}
-        handleCreate={handleCreateTeacher}
+        onClose={() => setOpenModal(false)}
+        onCreate={handleCreateTeacher}
       />
 
+      {/* Modal for updating teacher */}
       <ModalUpdateTeacher
         open={openUpdateModal}
-        handleClose={() => setOpenUpdateModal(false)}
+        onClose={() => setOpenUpdateModal(false)}
+        onUpdate={handleUpdateTeacher}
         teacher={selectedTeacher}
-        handleUpdate={handleUpdateTeacher}
       />
-
-      <TableContainer component={Paper} sx={{ mt: 2 }}>
-        <Table sx={{ minWidth: 650 }} aria-label="teachers table">
-          <TableHead>
-            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-              <TableCell sx={{ fontWeight: 600, color: '#1a1a1a' }}>Username</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#1a1a1a' }}>Full Name</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#1a1a1a' }}>Email</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#1a1a1a' }}>Role</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#1a1a1a' }}>Created Date</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#1a1a1a' }}>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          
-          <TableBody>
-            {teachers.map((teacher) => (
-              <TableRow key={teacher.id} sx={tableStyles.tableRow}>
-                <TableCell>{teacher.username}</TableCell>
-                <TableCell>{teacher.nombre_completo}</TableCell>
-                <TableCell>{teacher.email}</TableCell>
-                <TableCell>{teacher.rol}</TableCell>
-                <TableCell>
-                  {new Date(teacher.fecha_creacion).toLocaleDateString()}
-                </TableCell>
-                <TableCell>
-                  <IconButton 
-                    size="small" 
-                    sx={tableStyles.actionIcons}
-                    onClick={() => handleEdit(teacher.id)}
-                  >
-                    <EditIcon sx={tableStyles.editIcon} />
-                  </IconButton>
-                  <IconButton 
-                    size="small" 
-                    sx={tableStyles.actionIcons}
-                    onClick={() => handleDelete(teacher.id)}
-                  >
-                    <DeleteIcon sx={tableStyles.deleteIcon} />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Box>
+    </>
   );
 };
 
