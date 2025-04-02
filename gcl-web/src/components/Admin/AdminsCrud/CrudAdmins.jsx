@@ -1,29 +1,24 @@
 import React, { useState, useEffect } from "react";
 import {
-  Box,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Button,
-  IconButton,
-  CircularProgress,
-  Typography,
-  Paper
+  Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Button, IconButton, CircularProgress, Typography, Paper
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ModalCreateAdmin from "./ModalCreateAdmin";
+import ModalUpdateAdmin from "./ModalUpdateAdmin";
 import Cookies from 'js-cookie';
 import axios from 'axios';
+import { tableStyles } from '../../../styles/tableStyles';
+import Swal from 'sweetalert2';
 
 const CrudAdmins = () => {
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openModal, setOpenModal] = useState(false);
+  const [selectedAdmin, setSelectedAdmin] = useState(null);
+  const [openUpdateModal, setOpenUpdateModal] = useState(false);
 
   useEffect(() => {
     const fetchAdmins = async () => {
@@ -47,24 +42,113 @@ const CrudAdmins = () => {
     fetchAdmins();
   }, []);
 
-  const handleCreateAdmin = (newAdmin) => {
-    setAdmins((prev) => [...prev, { ...newAdmin, id: prev.length + 1 }]);
+  const handleCreateAdmin = async (newAdmin) => {
+    try {
+      const token = Cookies.get('accessToken');
+      const response = await axios.post('http://localhost:8000/usuarios/registrar/', {
+        ...newAdmin,
+        rol: 'admin'
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.status === 201) {
+        const refreshResponse = await axios.get('http://localhost:8000/usuarios/', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        
+        const adminsData = refreshResponse.data.filter(user => user.rol === 'admin');
+        setAdmins(adminsData);
+        
+        Swal.fire('Success', 'Admin created successfully', 'success');
+      }
+    } catch (err) {
+      Swal.fire('Error', 'Failed to create admin', 'error');
+      console.error(err);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      const token = Cookies.get('accessToken');
+      const result = await Swal.fire({
+        title: '¿Estás seguro?',
+        text: "¡No podrás revertir esto!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, eliminar!'
+      });
+
+      if (result.isConfirmed) {
+        const response = await axios.delete(`http://localhost:8000/usuarios/eliminar/${id}/`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.status === 200) {
+          setAdmins(prev => prev.filter(admin => admin.id !== id));
+          Swal.fire('¡Eliminado!', 'El admin ha sido eliminado.', 'success');
+        }
+      }
+    } catch (err) {
+      Swal.fire('Error', 'Failed to delete admin', 'error');
+      console.error(err);
+    }
+  };
+
+  const handleEdit = (id) => {
+    const admin = admins.find(a => a.id === id);
+    setSelectedAdmin(admin);
+    setOpenUpdateModal(true);
+  };
+
+  const handleUpdateAdmin = async (id, updatedData) => {
+    try {
+      const token = Cookies.get('accessToken');
+      const response = await axios.put(
+        `http://localhost:8000/usuarios/actualizar/${id}/`,
+        updatedData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.status === 200) {
+        const refreshResponse = await axios.get('http://localhost:8000/usuarios/', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        
+        const adminsData = refreshResponse.data.filter(user => user.rol === 'admin');
+        setAdmins(adminsData);
+        
+        Swal.fire('Success', 'Admin updated successfully', 'success');
+      }
+    } catch (err) {
+      Swal.fire('Error', 'Failed to update admin', 'error');
+      console.error(err);
+    }
   };
 
   if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
+    return <CircularProgress />;
   }
 
   if (error) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-        <Typography color="error">Error: {error}</Typography>
-      </Box>
-    );
+    return <Typography color="error">Error: {error}</Typography>;
   }
 
   return (
@@ -72,13 +156,7 @@ const CrudAdmins = () => {
       <Button
         variant="contained"
         onClick={() => setOpenModal(true)}
-        sx={{
-          mb: 2,
-          bgcolor: "#1a1a1a",
-          "&:hover": {
-            bgcolor: "#333",
-          },
-        }}
+        sx={{ mb: 2 }}
       >
         Add New Admin
       </Button>
@@ -89,16 +167,22 @@ const CrudAdmins = () => {
         handleCreate={handleCreateAdmin}
       />
 
-      <TableContainer component={Paper} sx={{ mt: 2 }}>
-        <Table sx={{ minWidth: 650 }} aria-label="admins table">
+      <ModalUpdateAdmin
+        open={openUpdateModal}
+        handleClose={() => setOpenUpdateModal(false)}
+        admin={selectedAdmin}
+        handleUpdate={handleUpdateAdmin}
+      />
+
+      <TableContainer component={Paper}>
+        <Table>
           <TableHead>
-            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-              <TableCell sx={{ fontWeight: 600, color: '#1a1a1a' }}>Username</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#1a1a1a' }}>Full Name</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#1a1a1a' }}>Email</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#1a1a1a' }}>Role</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#1a1a1a' }}>Created Date</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#1a1a1a' }}>Actions</TableCell>
+            <TableRow>
+              <TableCell>Username</TableCell>
+              <TableCell>Full Name</TableCell>
+              <TableCell>Email</TableCell>
+              <TableCell>Created Date</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -107,15 +191,14 @@ const CrudAdmins = () => {
                 <TableCell>{admin.username}</TableCell>
                 <TableCell>{admin.nombre_completo}</TableCell>
                 <TableCell>{admin.email}</TableCell>
-                <TableCell>{admin.rol}</TableCell>
                 <TableCell>
                   {new Date(admin.fecha_creacion).toLocaleDateString()}
                 </TableCell>
                 <TableCell>
-                  <IconButton size="small" sx={{ color: '#1a1a1a' }}>
+                  <IconButton onClick={() => handleEdit(admin.id)}>
                     <EditIcon />
                   </IconButton>
-                  <IconButton size="small" sx={{ color: '#1a1a1a' }}>
+                  <IconButton onClick={() => handleDelete(admin.id)}>
                     <DeleteIcon />
                   </IconButton>
                 </TableCell>
