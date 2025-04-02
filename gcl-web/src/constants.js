@@ -46,12 +46,12 @@ export const MENU_OPTIONS = {
       url: "/student/assignments",
     },
     {
-      label: "Calificaciones",
-      url: "/student/grades",
+      label: "Cursos Completados",
+      url: "/student/passed-courses",
     },
     {
-      label: "Cursos Aprobados",
-      url: "/student/passed-courses",
+      label: "Más Cursos",
+      url: "/student/more-courses",
     },
   ],
 };
