@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 
-const ModalCreateTeacher = ({ open, handleClose, handleCreate }) => {
+const ModalCreateTeacher = ({ open, onClose, onCreate }) => {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -29,16 +29,16 @@ const ModalCreateTeacher = ({ open, handleClose, handleCreate }) => {
   };
 
   const handleSubmit = () => {
-    // Basic validation
+    // Validación básica
     const newErrors = {};
-    if (!formData.username) newErrors.username = 'Username is required';
-    if (!formData.password) newErrors.password = 'Password is required';
+    if (!formData.username) newErrors.username = 'El nombre de usuario es requerido';
+    if (!formData.password) newErrors.password = 'La contraseña es requerida';
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = 'Las contraseñas no coinciden';
     }
-    if (!formData.nombre_completo) newErrors.nombre_completo = 'Full name is required';
+    if (!formData.nombre_completo) newErrors.nombre_completo = 'El nombre completo es requerido';
     if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Valid email is required';
+      newErrors.email = 'Se requiere un correo válido';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -46,7 +46,7 @@ const ModalCreateTeacher = ({ open, handleClose, handleCreate }) => {
       return;
     }
 
-    // Create teacher object
+    // Crear objeto de profesor
     const newTeacher = {
       username: formData.username,
       password: formData.password,
@@ -57,37 +57,48 @@ const ModalCreateTeacher = ({ open, handleClose, handleCreate }) => {
 
     handleCreate(newTeacher);
     handleClose();
-  };
+};
 
-  return (
-    <Modal open={open} onClose={handleClose}>
-      <Box sx={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 400,
-        bgcolor: 'background.paper',
+return (
+  <Modal
+    open={open}
+    onClose={onClose}
+    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+  >
+    <Box
+      sx={{
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        width: '500px',
         boxShadow: 24,
-        p: 4,
-        borderRadius: 2
-      }}>
-        <Typography variant="h6" mb={2}>Create New Teacher</Typography>
-
+        p: 3
+      }}
+    >
+      <Box
+        sx={{
+          backgroundColor: '#1976d2',
+          color: '#fff',
+          borderRadius: '12px 12px 0 0',
+          p: 2,
+          mb: 2
+        }}
+      >
+        <Typography variant="h6">Crear Nuevo Profesor</Typography>
+      </Box>
+      <form onSubmit={handleSubmit}>
         <TextField
           fullWidth
-          label="Username"
-          name="username"
+          margin="normal"
+          label="Nombre de Usuario"
           value={formData.username}
-          onChange={handleChange}
+          onChange={(e) => setFormData({ ...formData, username: e.target.value })}
           error={!!errors.username}
           helperText={errors.username}
-          margin="normal"
         />
 
         <TextField
           fullWidth
-          label="Password"
+          label="Contraseña"
           name="password"
           type={showPassword ? 'text' : 'password'}
           value={formData.password}
@@ -111,7 +122,7 @@ const ModalCreateTeacher = ({ open, handleClose, handleCreate }) => {
 
         <TextField
           fullWidth
-          label="Confirm Password"
+          label="Confirmar Contraseña"
           name="confirmPassword"
           type={showPassword ? 'text' : 'password'}
           value={formData.confirmPassword}
@@ -123,7 +134,7 @@ const ModalCreateTeacher = ({ open, handleClose, handleCreate }) => {
 
         <TextField
           fullWidth
-          label="Full Name"
+          label="Nombre Completo"
           name="nombre_completo"
           value={formData.nombre_completo}
           onChange={handleChange}
@@ -134,7 +145,7 @@ const ModalCreateTeacher = ({ open, handleClose, handleCreate }) => {
 
         <TextField
           fullWidth
-          label="Email"
+          label="Correo Electrónico"
           name="email"
           type="email"
           value={formData.email}
@@ -144,13 +155,26 @@ const ModalCreateTeacher = ({ open, handleClose, handleCreate }) => {
           margin="normal"
         />
 
-        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmit}>Create</Button>
+        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+          <Button 
+            variant="outlined" 
+            onClick={onClose}
+            sx={{ borderRadius: '20px' }}
+          >
+            Cancelar
+          </Button>
+          <Button 
+            type="submit" 
+            variant="contained" 
+            sx={{ borderRadius: '20px' }}
+          >
+            Crear
+          </Button>
         </Box>
-      </Box>
-    </Modal>
-  );
+      </form>
+    </Box>
+  </Modal>
+);
 };
 
 export default ModalCreateTeacher;
