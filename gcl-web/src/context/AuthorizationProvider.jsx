@@ -21,8 +21,11 @@ const AuthorizationProvider = ({ children }) => {
           ...decoded,
         });
         // Redirect to dashboard if user is authenticated
-        if (window.location.pathname === '/' || window.location.pathname === '/login') {
-          router.push('/dashboard');
+        if (
+          window.location.pathname === "/" ||
+          window.location.pathname === "/login"
+        ) {
+          router.push("/dashboard");
         }
       } catch (error) {
         console.error("Error decoding token:", error);
@@ -45,7 +48,7 @@ const AuthorizationProvider = ({ children }) => {
         },
         {
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           withCredentials: true,
         }
@@ -79,8 +82,27 @@ const AuthorizationProvider = ({ children }) => {
     router.push("/login");
   };
 
+  // In your AuthContext provider
+  const validateToken = async () => {
+    const accessToken = Cookies.get("accessToken");
+    if (accessToken) {
+      try {
+        const decoded = jwtDecode(accessToken);
+        setUser({
+          username: decoded.username,
+          rol: decoded.rol,
+          ...decoded,
+        });
+      } catch (error) {
+        Cookies.remove("accessToken");
+        Cookies.remove("refreshToken");
+        setUser(null);
+      }
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, validateToken }}>
       {children}
     </AuthContext.Provider>
   );
