@@ -4,8 +4,9 @@ export const MENU_OPTIONS = {
       label: "Usuarios",
       url: "/admin/manage/users",
       subPages: [
-        { label: "Profesores", url: "/admin/manage/users/profesores" },
-        { label: "Alumnos", url: "/admin/manage/users/alumnos" },
+        { label: "Profesores", url: "/admin/manage/users/teachers" },
+        { label: "Alumnos", url: "/admin/manage/users/students" },
+        { label: "Administradores", url: "/admin/manage/users/admins" },
       ],
     },
     {
