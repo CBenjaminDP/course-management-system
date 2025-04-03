@@ -3,35 +3,27 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.db import models
 
 class UsuarioManager(BaseUserManager):
-    def create_user(self, username, email, nombre_completo, rol, password=None):
-        if not username:
-            raise ValueError('El username es obligatorio')
+    def create_user(self, email, password=None, **extra_fields):
         if not email:
-            raise ValueError('El email es obligatorio')
-
-        user = self.model(
-            username=username,
-            email=self.normalize_email(email),
-            nombre_completo=nombre_completo,
-            rol=rol
-        )
-        user.set_password(password)
+            raise ValueError('El Email es obligatorio')
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        if password:
+            user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, username, email, nombre_completo, rol, password=None):
-        user = self.create_user(
-            username=username,
-            email=email,
-            password=password,
-            nombre_completo=nombre_completo,
-            rol=rol,
-        )
-        user.is_admin = True
-        user.is_staff = True
-        user.is_superuser = True
-        user.save(using=self._db)
-        return user
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('rol', 'admin')
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
+
+        return self.create_user(email, password, **extra_fields)
 
 class Usuario(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
