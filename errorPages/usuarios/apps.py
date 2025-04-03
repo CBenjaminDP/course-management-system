@@ -1,31 +1,29 @@
 from django.apps import AppConfig
 from django.db.models.signals import post_migrate
+from django.contrib.auth import get_user_model
 
 def crear_usuarios_default(sender, **kwargs):
-    from .models import Usuario
-
+    Usuario = get_user_model()
     usuarios_default = [
         {
-            'username': 'admin',
             'email': 'admin@example.com',
-            'password': 'admin123',
-            'nombre_completo': 'Administrador',
+            'password': '$2b$10$3V96eNj2aQbApmbluwWoyORR3BLf8hWkbTLu.lKNE2UqJ2PX8tAsK',
+            'username': 'admin',
             'rol': 'admin',
             'is_staff': True,
-            'is_admin': True,
-            'is_superuser': True
+            'is_superuser': True,
         },
         {
             'username': 'profesor',
             'email': 'profesor@example.com',
-            'password': 'profesor123',
+            'password': '$2b$10$ZLONC6WY33LUUd3r6MgzzOXqLCxWf4x1qq0tXwND/NHdGx7MwF8vq',
             'nombre_completo': 'Profesor Default',
             'rol': 'profesor'
         },
         {
             'username': 'estudiante',
             'email': 'estudiante@example.com',
-            'password': 'estudiante123',
+            'password': '$2b$10$xGq7bOemKzQeGQTV2cWBmeFM15TDQab1PbD9cgU0yvoOaKg/6Nlw2',
             'nombre_completo': 'Estudiante Default',
             'rol': 'estudiante'
         }

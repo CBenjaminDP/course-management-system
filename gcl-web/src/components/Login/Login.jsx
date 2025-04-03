@@ -25,6 +25,7 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { styled } from "@mui/material/styles";
 import MuiCard from "@mui/material/Card";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { useRouter } from 'next/navigation';  // Add this import at the top
 
 // Esquema de validación con Yup
 const validationSchema = Yup.object({
@@ -79,6 +80,7 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
 
 const LoginForm = () => {
   const { login } = useContext(AuthContext);
+  const router = useRouter();  // Add this line
   const [showPassword, setShowPassword] = useState(false);
 
   const formik = useFormik({
@@ -102,7 +104,7 @@ const LoginForm = () => {
   };
 
   const handleGoBack = () => {
-    window.history.back();
+    router.push('/');
   };
 
   return (
