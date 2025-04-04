@@ -11,5 +11,6 @@ urlpatterns = [
     path('eliminar/<str:id>/', views.eliminar_usuario, name='eliminar_usuario'),
     path('desactivar/<str:id>/', views.desactivar_usuario, name='desactivar_usuario'),
     path('usuario-actual/', views.obtener_usuario_actual, name='obtener_usuario_actual'),
+    path('profesores/', views.listar_profesores, name='listar_profesores'),
 ]
 
