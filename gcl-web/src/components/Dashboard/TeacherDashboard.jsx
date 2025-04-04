@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from 'axios';
+import Cookies from 'js-cookie';
 import { 
   Box, 
   Grid, 
@@ -17,7 +19,6 @@ import {
   Snackbar,
   Alert,
   Chip,
-  Avatar,
   Divider,
   useTheme,
   Select,
@@ -31,58 +32,20 @@ import {
   Add as AddIcon, 
   Edit as EditIcon, 
   Delete as DeleteIcon,
-  School as SchoolIcon,
   Close as CloseIcon,
   Check as CheckIcon,
   Person as PersonIcon,
   CalendarToday as CalendarIcon
 } from "@mui/icons-material";
+import Swal from 'sweetalert2';
 
 const TeacherDashboard = () => {
   const theme = useTheme();
   
-  // Datos hardcodeados de profesores para el select
-  const teachers = [
-    { id: 1, name: "Prof. García" },
-    { id: 2, name: "Prof. Martínez" },
-    { id: 3, name: "Prof. Rodríguez" }
-  ];
-
-  // Estado inicial de los cursos
-  const [courses, setCourses] = useState([
-    {
-      id: 1,
-      nombre: "Matemáticas Avanzadas",
-      descripcion: "Curso de cálculo diferencial e integral para estudiantes de ingeniería.",
-      profesor: 1,
-      fecha_inicio: "2023-09-01",
-      fecha_fin: "2023-12-15",
-      estado: true,
-      imagen: "https://sistemas.fciencias.unam.mx/~rich/MAF/imagenes/MAF_portada_web.jpg"
-    },
-    {
-      id: 2,
-      nombre: "Programación Web",
-      descripcion: "Aprende desarrollo web con React, Node.js y MongoDB.",
-      profesor: 2,
-      fecha_inicio: "2023-10-01",
-      fecha_fin: "2023-12-20",
-      estado: true,
-      imagen: "https://www.ucatalunya.edu.co/img/blog/que-es-el-desarrollo-web-full-stack-y-por-que-es-una-de-las-profesiones-mas-demandadas-del-mercado-en-aplicaciones-web.jpg"
-    },
-    {
-      id: 3,
-      nombre: "Historia del Arte",
-      descripcion: "Recorrido por los movimientos artísticos más importantes del siglo XX.",
-      profesor: 3,
-      fecha_inicio: "2023-09-15",
-      fecha_fin: "2023-11-30",
-      estado: false,
-      imagen: "https://sobrehisteria.wordpress.com/wp-content/uploads/2014/10/foto_historia.jpg?w=640"
-    }
-  ]);
-
-  // Estados para los modales
+  // Estados
+  const [courses, setCourses] = useState([]);
+  const [teachers, setTeachers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [openDelete, setOpenDelete] = useState(false);
   const [currentCourse, setCurrentCourse] = useState(null);
@@ -92,16 +55,121 @@ const TeacherDashboard = () => {
     severity: "success"
   });
 
-  // Manejadores para el modal de creación/edición
+  // Función para obtener headers con token
+  const getAuthHeaders = () => {
+    const token = Cookies.get('accessToken');
+    return {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    };
+  };
+
+  // Obtener cursos
+  const fetchCourses = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/cursos/listar_cursos/', getAuthHeaders());
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener cursos:', error);
+      throw error;
+    }
+  };
+
+  // Obtener profesores
+  const fetchTeachers = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/usuarios/profesores/', getAuthHeaders());
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener profesores:', error);
+      throw error;
+    }
+};
+
+  // Cargar datos iniciales
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [coursesData, teachersData] = await Promise.all([
+          fetchCourses(),
+          fetchTeachers()
+        ]);
+        setCourses(coursesData);
+        setTeachers(teachersData);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error cargando datos:', error);
+        setLoading(false);
+        showSnackbar("Error al cargar los datos", "error");
+      }
+    };
+    
+    loadData();
+  }, []);
+
+  // Crear curso
+  const createCourse = async (courseData) => {
+    try {
+      const response = await axios.post(
+        'http://localhost:8000/cursos/registrar_curso/', 
+        courseData, 
+        getAuthHeaders()
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error al crear curso:', error);
+      throw error;
+    }
+  };
+
+  // Actualizar curso
+  const updateCourse = async (id, courseData) => {
+    try {
+      const response = await axios.put(
+        `http://localhost:8000/cursos/actualizar_curso/${id}/`, 
+        courseData, 
+        getAuthHeaders()
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error al actualizar curso:', error);
+      throw error;
+    }
+  };
+
+  // Eliminar curso
+  const deleteCourse = async (id) => {
+    try {
+      const response = await axios.delete(
+        `http://localhost:8000/cursos/eliminar_curso/${id}/`, 
+        getAuthHeaders()
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error al eliminar curso:', error);
+      throw error;
+    }
+  };
+
+  // Manejadores de UI
   const handleOpenDialog = (course = null) => {
-    setCurrentCourse(course || {
-      nombre: "",
-      descripcion: "",
-      profesor: "",
-      fecha_inicio: "",
-      fecha_fin: "",
-      estado: false
-    });
+    setCurrentCourse(course
+      ? {
+          ...course,
+          profesor: course.profesor?.id || course.profesor // Normaliza a un id
+        }
+      : {
+          nombre: "",
+          descripcion: "",
+          profesor: "",
+          fecha_inicio: "",
+          fecha_fin: "",
+          estado: true,
+          imagen_url: ""
+        }
+    );
     setOpenDialog(true);
   };
 
@@ -110,7 +178,6 @@ const TeacherDashboard = () => {
     setCurrentCourse(null);
   };
 
-  // Manejadores para el modal de eliminación
   const handleOpenDelete = (course) => {
     setCurrentCourse(course);
     setOpenDelete(true);
@@ -121,7 +188,6 @@ const TeacherDashboard = () => {
     setCurrentCourse(null);
   };
 
-  // Manejador de cambios en el formulario
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setCurrentCourse(prev => ({
@@ -130,33 +196,43 @@ const TeacherDashboard = () => {
     }));
   };
 
-  // Manejadores para las acciones CRUD
-  const handleSubmit = () => {
-    if (currentCourse.id) {
-      // Actualizar curso existente
-      setCourses(courses.map(c => c.id === currentCourse.id ? currentCourse : c));
-      showSnackbar("Curso actualizado con éxito", "success");
-    } else {
-      // Crear nuevo curso
-      const newCourse = {
-        ...currentCourse,
-        id: Math.max(...courses.map(c => c.id)) + 1,
-        imagen: "https://img.pikbest.com/backgrounds/20190715/summer-training-course-enrollment-hd-background_1898741.jpg!bw700"
-      };
-      setCourses([...courses, newCourse]);
-      showSnackbar("Curso creado con éxito", "success");
+  // Manejador para enviar formulario
+  const handleSubmit = async () => {
+    try {
+      if (currentCourse.id) {
+        await updateCourse(currentCourse.id, currentCourse);
+        const updatedCourses = await fetchCourses();
+        setCourses(updatedCourses);
+        showSnackbar("Curso actualizado con éxito", "success");
+      } else {
+        await createCourse(currentCourse);
+        const updatedCourses = await fetchCourses();
+        setCourses(updatedCourses);
+        showSnackbar("Curso creado con éxito", "success");
+      }
+      handleCloseDialog();
+    } catch (error) {
+      console.error('Error al guardar curso:', error);
+      const errorMsg = error.response?.data?.error || "Error al procesar la solicitud";
+      showSnackbar(errorMsg, "error");
     }
-    handleCloseDialog();
   };
 
-  const handleDelete = () => {
-    // Eliminar curso
-    setCourses(courses.filter(c => c.id !== currentCourse.id));
-    showSnackbar("Curso eliminado con éxito", "success");
-    handleCloseDelete();
+  // Manejador para eliminar curso
+  const handleDelete = async () => {
+    try {
+      await deleteCourse(currentCourse.id);
+      const updatedCourses = await fetchCourses();
+      setCourses(updatedCourses);
+      showSnackbar("Curso eliminado con éxito", "success");
+      handleCloseDelete();
+    } catch (error) {
+      console.error('Error al eliminar curso:', error);
+      showSnackbar("Error al eliminar el curso", "error");
+    }
   };
 
-  // Manejador del snackbar
+  // Funciones auxiliares
   const showSnackbar = (message, severity) => {
     setSnackbar({
       open: true,
@@ -172,11 +248,24 @@ const TeacherDashboard = () => {
     }));
   };
 
-  // Formatear fecha para mostrarla
   const formatDate = (dateString) => {
+    if (!dateString) return "No definida";
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString('es-ES', options);
   };
+
+  const getTeacherName = (teacherId) => {
+    const teacher = teachers.find(t => t.id === teacherId);
+    return teacher ? teacher.username : "Profesor no asignado";
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Typography variant="h6">Cargando...</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, backgroundColor: theme.palette.background.default }}>
@@ -187,7 +276,7 @@ const TeacherDashboard = () => {
             Cursos
           </Typography>
           <Typography variant="subtitle1" color="text.secondary">
-            Crea nuevos cursos para tus estudiantes.
+            Gestiona los cursos disponibles.
           </Typography>
         </Box>
         <Button 
@@ -218,7 +307,7 @@ const TeacherDashboard = () => {
             }}>
               <Box sx={{ 
                 height: 160, 
-                backgroundImage: `url(${course.imagen})`, 
+                backgroundImage: `url(${course.imagen_url || 'https://img.pikbest.com/backgrounds/20190715/summer-training-course-enrollment-hd-background_1898741.jpg!bw700'})`, 
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 position: 'relative'
@@ -244,7 +333,7 @@ const TeacherDashboard = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <PersonIcon color="action" sx={{ mr: 1 }} />
                   <Typography variant="body2" color="text.secondary">
-                    {teachers.find(t => t.id === course.profesor)?.name || "Profesor no asignado"}
+                    {getTeacherName(course.profesor?.id || course.profesor)}
                   </Typography>
                 </Box>
                 
@@ -314,23 +403,28 @@ const TeacherDashboard = () => {
                 sx={{ mb: 3, mt: 3 }}
                 variant="outlined"
                 placeholder="Nombre del curso"
+                required
               />
               
               <FormControl fullWidth sx={{ mb: 3 }}>
-                <InputLabel>Profesor</InputLabel>
-                <Select
-                  name="profesor"
-                  value={currentCourse?.profesor || ""}
-                  onChange={handleInputChange}
-                  label="Profesor"
-                >
-                  {teachers.map(teacher => (
-                    <MenuItem key={teacher.id} value={teacher.id}>
-                      {teacher.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+  <InputLabel>Profesor</InputLabel>
+  <Select
+    name="profesor"
+    value={currentCourse?.profesor || ""} // Asegúrate de que sea un id
+    onChange={(e) => setCurrentCourse((prev) => ({
+      ...prev,
+      profesor: e.target.value // Guarda solo el id del profesor
+    }))}
+    label="Profesor"
+    required
+  >
+    {teachers.map((teacher) => (
+      <MenuItem key={teacher.id} value={teacher.id}>
+        {teacher.username}
+      </MenuItem>
+    ))}
+  </Select>
+</FormControl>
               
               <TextField
                 fullWidth
@@ -341,6 +435,7 @@ const TeacherDashboard = () => {
                 onChange={handleInputChange}
                 sx={{ mb: 3 }}
                 InputLabelProps={{ shrink: true }}
+                required
               />
             </Grid>
             
@@ -354,19 +449,32 @@ const TeacherDashboard = () => {
                 onChange={handleInputChange}
                 sx={{ mb: 3, mt: 3  }}
                 InputLabelProps={{ shrink: true }}
+                required
               />
               
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    name="estado"
-                    checked={currentCourse?.estado || false}
-                    onChange={handleInputChange}
-                    color="primary"
-                  />
-                }
-                label="Curso activo"
+              {currentCourse?.id && (
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      name="estado"
+                      checked={currentCourse?.estado || false}
+                      onChange={handleInputChange}
+                      color="primary"
+                    />
+                  }
+                  label="Curso activo"
+                  sx={{ mb: 3 }}
+                />
+              )}
+              
+              <TextField
+                fullWidth
+                label="URL de la imagen"
+                name="imagen_url"
+                value={currentCourse?.imagen_url || ""}
+                onChange={handleInputChange}
                 sx={{ mb: 3 }}
+                placeholder="URL de la imagen del curso"
               />
             </Grid>
             
@@ -380,6 +488,7 @@ const TeacherDashboard = () => {
                 multiline
                 rows={4}
                 placeholder="Descripción del curso"
+                required
               />
             </Grid>
           </Grid>
@@ -396,7 +505,7 @@ const TeacherDashboard = () => {
           <Button 
             onClick={handleSubmit}
             variant="contained"
-            disabled={!currentCourse?.nombre || !currentCourse?.descripcion}
+            disabled={!currentCourse?.nombre || !currentCourse?.descripcion || !currentCourse?.profesor || !currentCourse?.fecha_inicio || !currentCourse?.fecha_fin}
             startIcon={<CheckIcon />}
           >
             {currentCourse?.id ? "Actualizar" : "Crear"}

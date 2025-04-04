@@ -176,3 +176,17 @@ def obtener_usuario_actual(request):
         # otros campos que necesites
     }
     return JsonResponse(data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def listar_profesores(request):
+    profesores = Usuario.objects.filter(rol__in=['teacher', 'profesor'])  # Filtra por los roles adecuados
+    
+    data = [{
+        'id': profesor.id,
+        'username': profesor.username,
+        'nombre_completo': profesor.nombre_completo,
+        'email': profesor.email
+    } for profesor in profesores]
+    
+    return JsonResponse(data, safe=False)
