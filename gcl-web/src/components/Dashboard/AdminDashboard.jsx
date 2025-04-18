@@ -6,9 +6,13 @@ import EmailIcon from "@mui/icons-material/Email";
 import PersonIcon from "@mui/icons-material/Person";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import LockIcon from '@mui/icons-material/Lock';
-import Cookies from "js-cookie"; // Add this import
+import Cookies from "js-cookie";
+
+import { useTheme } from '@mui/material/styles';
+
 
 const AdminDashboard = () => {
+  const theme = useTheme();
   const { user } = useContext(AuthContext);
   const [userDetails, setUserDetails] = useState(null);
   const [passwordForm, setPasswordForm] = useState({
@@ -65,7 +69,8 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
-        const token = Cookies.get("accessToken"); // Get token from cookies
+        const token = Cookies.get("accessToken");
+        
         console.log(token);
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/usuarios/uuid/${user.user_id}/`,
@@ -106,183 +111,182 @@ const AdminDashboard = () => {
   );
 
   return (
-    <Container maxWidth="lg">
-      <Box
+    
+    <Box sx={{ 
+      p: { xs: 2, md: 0 }, 
+      backgroundColor: theme.palette.background.default,
+      minHeight: '100vh'
+    }}>
+      <Paper
+        elevation={4}
         sx={{
+          p: 4,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          mt: 4,
+          borderRadius: 10,
+          background: "linear-gradient(145deg, #ffffff 0%, #f5f5f5 100%)",
+          width: "100%",
+          maxWidth: 1200,
+          mx: 'auto',
+          my: 'auto'
         }}
       >
-        <Paper
-          elevation={3}
+        <Typography
+          variant="h3"
+          gutterBottom
           sx={{
-            p: 4,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            borderRadius: 2,
-            background: "linear-gradient(145deg, #ffffff 0%, #f5f5f5 100%)",
+            fontWeight: 600,
+            background: "linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)",
+            backgroundClip: "text",
+            textFillColor: "transparent",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+          }}
+        >
+          ¡Bienvenido!
+        </Typography>
+
+        <Typography
+          variant="h4"
+          color="primary"
+          gutterBottom
+          sx={{
+            fontWeight: 500,
+            textAlign: "center",
+            mb: 4,
+          }}
+        >
+          {user?.username}
+        </Typography>
+
+        <Grid container spacing={4} sx={{ mt: 2 }}>
+          <Grid item xs={12} md={6}>
+            <InfoItem
+              icon={<PersonIcon color="primary" />}
+              label="Nombre Completo"
+              value={userDetails?.nombre_completo || user?.username}
+            />
+            <InfoItem
+              icon={<EmailIcon color="primary" />}
+              label="Correo Electrónico"
+              value={userDetails?.email || user?.email}
+            />
+            <InfoItem
+              icon={<AdminPanelSettingsIcon color="primary" />}
+              label="Rol"
+              value={userDetails?.rol?.toUpperCase() || user?.rol?.toUpperCase()}
+            />
+            <InfoItem
+              icon={<CalendarTodayIcon color="primary" />}
+              label="Fecha de Registro"
+              value={
+                userDetails?.fecha_creacion
+                  ? new Date(userDetails.fecha_creacion).toLocaleDateString('es-ES', {
+                      day: '2-digit',
+                      month: 'long',
+                      year: 'numeric',
+                    })
+                  : "No disponible"
+              }
+            />
+          </Grid>
+        </Grid>
+
+        <Box
+          sx={{
             width: "100%",
             maxWidth: 800,
+            mt: 4,
+            pt: 4,
+            borderTop: "1px solid rgba(0, 0, 0, 0.12)",
           }}
         >
           <Typography
-            variant="h3"
+            variant="h5"
             gutterBottom
             sx={{
-              fontWeight: 600,
-              background: "linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)",
-              backgroundClip: "text",
-              textFillColor: "transparent",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
-          >
-            ¡Bienvenido!
-          </Typography>
-
-          <Typography
-            variant="h4"
-            color="primary"
-            gutterBottom
-            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              mb: 3,
+              color: '#1a1a1a',
               fontWeight: 500,
-              textAlign: "center",
-              mb: 4,
+              justifyContent: 'center',
             }}
           >
-            {user?.username}
+            <LockIcon color="primary" />
+            Cambiar Contraseña
           </Typography>
-
-          <Grid container spacing={4} sx={{ mt: 2 }}>
-            <Grid item xs={12} md={6}>
-              <InfoItem
-                icon={<PersonIcon color="primary" />}
-                label="Nombre Completo"
-                value={userDetails?.nombre_completo || user?.username}
-              />
-              <InfoItem
-                icon={<EmailIcon color="primary" />}
-                label="Correo Electrónico"
-                value={userDetails?.email || user?.email}
-              />
-              <InfoItem
-                icon={<AdminPanelSettingsIcon color="primary" />}
-                label="Rol"
-                value={userDetails?.rol?.toUpperCase() || user?.rol?.toUpperCase()}
-              />
-              <InfoItem
-                icon={<CalendarTodayIcon color="primary" />}
-                label="Fecha de Registro"
-                value={
-                  userDetails?.fecha_creacion
-                    ? new Date(userDetails.fecha_creacion).toLocaleDateString('es-ES', {
-                        day: '2-digit',
-                        month: 'long',
-                        year: 'numeric'
-                      })
-                    : "No disponible"
-                }
-              />
-            </Grid>
-          </Grid>
 
           <Box
+            component="form"
+            onSubmit={handlePasswordChange}
             sx={{
               width: "100%",
-              maxWidth: 800,
-              mt: 4,
-              pt: 4,
-              borderTop: "1px solid rgba(0, 0, 0, 0.12)",
+              maxWidth: 400,
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+              mx: "auto",
             }}
           >
-            <Typography
-              variant="h5"
-              gutterBottom
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                mb: 3,
-                color: '#1a1a1a',
-                fontWeight: 500,
-                justifyContent: 'center',
-              }}
+            <TextField
+              fullWidth
+              type="password"
+              label="Contraseña Actual"
+              value={passwordForm.currentPassword}
+              onChange={(e) =>
+                setPasswordForm({ ...passwordForm, currentPassword: e.target.value })
+              }
+              required
+            />
+            <TextField
+              fullWidth
+              type="password"
+              label="Nueva Contraseña"
+              value={passwordForm.newPassword}
+              onChange={(e) =>
+                setPasswordForm({ ...passwordForm, newPassword: e.target.value })
+              }
+              required
+            />
+            <TextField
+              fullWidth
+              type="password"
+              label="Confirmar Nueva Contraseña"
+              value={passwordForm.confirmPassword}
+              onChange={(e) =>
+                setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })
+              }
+              required
+            />
+            
+            {error && (
+              <Typography color="error" variant="body2">
+                {error}
+              </Typography>
+            )}
+            {success && (
+              <Typography color="success.main" variant="body2">
+                {success}
+              </Typography>
+            )}
+
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              sx={{ mt: 2 }}
             >
-              <LockIcon color="primary" />
               Cambiar Contraseña
-            </Typography>
-
-            <Box
-              component="form"
-              onSubmit={handlePasswordChange}
-              sx={{
-                width: "100%",
-                maxWidth: 400,
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
-                mx: "auto",
-              }}
-            >
-              <TextField
-                fullWidth
-                type="password"
-                label="Contraseña Actual"
-                value={passwordForm.currentPassword}
-                onChange={(e) =>
-                  setPasswordForm({ ...passwordForm, currentPassword: e.target.value })
-                }
-                required
-              />
-              <TextField
-                fullWidth
-                type="password"
-                label="Nueva Contraseña"
-                value={passwordForm.newPassword}
-                onChange={(e) =>
-                  setPasswordForm({ ...passwordForm, newPassword: e.target.value })
-                }
-                required
-              />
-              <TextField
-                fullWidth
-                type="password"
-                label="Confirmar Nueva Contraseña"
-                value={passwordForm.confirmPassword}
-                onChange={(e) =>
-                  setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })
-                }
-                required
-              />
-              
-              {error && (
-                <Typography color="error" variant="body2">
-                  {error}
-                </Typography>
-              )}
-              {success && (
-                <Typography color="success.main" variant="body2">
-                  {success}
-                </Typography>
-              )}
-
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                sx={{ mt: 2 }}
-              >
-                Cambiar Contraseña
-              </Button>
-            </Box>
+            </Button>
           </Box>
-        </Paper>
-      </Box>
-    </Container>
+        </Box>
+      </Paper>
+    </Box>
   );
 };
+
 
 export default AdminDashboard;

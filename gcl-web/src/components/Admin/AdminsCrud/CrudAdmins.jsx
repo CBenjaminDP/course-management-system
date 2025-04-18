@@ -24,6 +24,12 @@ import Swal from 'sweetalert2';
 import { Card, CardHeader, CardContent } from '@mui/material';
 import { Add } from '@mui/icons-material';
 import { Refresh } from '@mui/icons-material';
+import {
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
+} from "@mui/material";
 
 const styles = {
   card: {
@@ -81,6 +87,7 @@ const CrudAdmins = () => {
       setLoading(false);
     }
   };
+
 
   useEffect(() => {
     fetchAdmins();
@@ -247,7 +254,7 @@ const CrudAdmins = () => {
     <>
       <Card sx={styles.card}>
         <CardHeader
-          title="Gestión de Administradores"
+          title="Gestión de Administradores" // Change title back
           titleTypographyProps={{ variant: 'h5' }}
           sx={styles.header}
           action={
@@ -270,22 +277,24 @@ const CrudAdmins = () => {
           }
         />
         <CardContent>
+          {/* Remove the role filter selector */}
+
           <TableContainer component={Paper} sx={{ mt: 2 }}>
-            <Table sx={{ minWidth: 650 }} aria-label="admins table">
+            <Table sx={{ minWidth: 650 }} aria-label="admins table"> {/* Change table label */}
               <TableHead>
                 <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                  <TableCell sx={{ fontWeight: 600, color: '#1a1a1a' }}>Usuario</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#1a1a1a' }}>Nombre Completo</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#1a1a1a' }}>Correo</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#1a1a1a' }}>Rol</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#1a1a1a' }}>Fecha de Creación</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#1a1a1a' }}>Acciones</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Usuario</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Nombre</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Correo</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Rol</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Fecha Creación</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Acciones</TableCell>
                 </TableRow>
               </TableHead>
               
               <TableBody>
-                {admins.map((admin) => (
-                  <TableRow key={admin.id} sx={tableStyles.tableRow}>
+                {admins.map((admin) => ( // Change from filteredUsers to admins
+                  <TableRow key={admin.id}>
                     <TableCell>{admin.username}</TableCell>
                     <TableCell>{admin.nombre_completo}</TableCell>
                     <TableCell>{admin.email}</TableCell>
