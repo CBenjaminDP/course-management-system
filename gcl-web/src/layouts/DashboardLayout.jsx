@@ -12,7 +12,7 @@ const DashboardLayout = ({ children }) => {
       sx={{
         display: "flex",
         minHeight: "100vh",
-        bgcolor: "#f5f5f7",
+        bgcolor: "rgba(255, 255, 255, 0)",
         overflow: "hidden",
       }}
     >
@@ -95,7 +95,7 @@ const DashboardLayout = ({ children }) => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          p: 0,
           width: "100%",
           minHeight: "100vh",
           overflow: "auto",

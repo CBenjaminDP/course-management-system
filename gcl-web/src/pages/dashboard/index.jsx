@@ -46,7 +46,7 @@ const Dashboard = () => {
   if (!user) return null;
 
   return (
-    <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <Box sx={{ minHeight: "100vh", minWidth: "100vw", display: "flex", flexDirection: "column" }}>
       <DashboardLayout>{renderDashboard()}</DashboardLayout>
     </Box>
   );

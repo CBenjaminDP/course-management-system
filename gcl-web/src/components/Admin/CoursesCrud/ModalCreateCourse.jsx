@@ -1,51 +1,269 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Modal,
   TextField,
   Button,
-  Typography
+  Typography,
+  Stack,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl,
+  Switch,
+  FormControlLabel,
+  Grid
 } from '@mui/material';
+import axios from 'axios';
+import Cookies from 'js-cookie';
+import Swal from 'sweetalert2';
 
 const ModalCreateCourse = ({ open, onClose, onCreate }) => {
   const [formData, setFormData] = useState({
-    name: '',
-    description: ''
+    nombre: '',
+    descripcion: '',
+    profesor: '',
+    fecha_inicio: '',
+    fecha_fin: '',
+    estado: true,
+    imagen_url: ''
   });
+  const [teachers, setTeachers] = useState([]);
+  const [loadingTeachers, setLoadingTeachers] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    const fetchTeachers = async () => {
+      try {
+        const token = Cookies.get('accessToken');
+        const response = await axios.get('http://localhost:8000/usuarios/', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        setTeachers(response.data.filter(user => user.rol === 'teacher'));
+      } catch (error) {
+        console.error('Error fetching teachers:', error);
+      } finally {
+        setLoadingTeachers(false);
+      }
+    };
+
+    if (open) {
+      fetchTeachers();
+    }
+  }, [open]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleStatusChange = (e) => {
+    setFormData(prev => ({
+      ...prev,
+      estado: e.target.checked
+    }));
+  };
+
+  // Add these new states
+  const [isFormValid, setIsFormValid] = useState(false);
+  
+  // Add this useEffect for form validation
+  useEffect(() => {
+    const isValid = (
+      formData.nombre &&
+      formData.descripcion &&
+      formData.profesor &&
+      formData.fecha_inicio &&
+      formData.fecha_fin &&
+      new Date(formData.fecha_inicio) <= new Date(formData.fecha_fin)
+    );
+    setIsFormValid(isValid);
+  }, [formData]);
+  
+  // Update the handleSubmit function
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onCreate(formData);
-    onClose();
+    setIsSubmitting(true);
+    
+    try {
+      const token = Cookies.get('accessToken');
+      await axios.post('http://localhost:8000/cursos/registrar_curso/', formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+  
+      // Close the modal first
+      onClose();
+      
+      // Reset form data
+      setFormData({
+        nombre: '',
+        descripcion: '',
+        profesor: '',
+        fecha_inicio: '',
+        fecha_fin: '',
+        estado: true,
+        imagen_url: ''
+      });
+  
+      // Then show success message
+      await Swal.fire({
+        title: 'Éxito',
+        text: 'Curso creado correctamente',
+        icon: 'success'
+      });
+      
+      // Finally refresh the data
+      onCreate();
+    } catch (error) {
+      console.error('Error creating course:', error);
+      await Swal.fire('Error', 'No se pudo crear el curso', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <Modal open={open} onClose={onClose}>
-      <Box sx={{ /* Add your modal styles here */ }}>
-        <Typography variant="h6">Create New Course</Typography>
+    <Modal open={open} onClose={onClose} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Box sx={{ 
+        backgroundColor: 'white', 
+        borderRadius: '12px', 
+        width: '500px', 
+        boxShadow: 24, 
+        p: 3 
+      }}>
+        <Box sx={{ 
+          backgroundColor: '#1976d2', 
+          color: '#fff', 
+          borderRadius: '12px 12px 0 0', 
+          p: 2, 
+          mb: 2 
+        }}>
+          <Typography variant="h6">Crear Nuevo Curso</Typography>
+        </Box>
+        
         <form onSubmit={handleSubmit}>
-          <TextField
-            label="Course Name"
-            value={formData.name}
-            onChange={(e) => setFormData({...formData, name: e.target.value})}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Description"
-            value={formData.description}
-            onChange={(e) => setFormData({...formData, description: e.target.value})}
-            fullWidth
-            margin="normal"
-            multiline
-            rows={4}
-          />
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-            <Button onClick={onClose}>Cancel</Button>
-            <Button type="submit" variant="contained" sx={{ ml: 2 }}>
-              Create
-            </Button>
-          </Box>
+          <Stack spacing={3}>
+            <TextField
+              label="Nombre del Curso"
+              name="nombre"
+              value={formData.nombre}
+              onChange={handleChange}
+              fullWidth
+              required
+            />
+            
+            <TextField
+              label="Descripción"
+              name="descripcion"
+              value={formData.descripcion}
+              onChange={handleChange}
+              fullWidth
+              multiline
+              rows={4}
+            />
+            
+            <FormControl fullWidth>
+              <InputLabel>Profesor</InputLabel>
+              <Select
+                name="profesor"
+                value={formData.profesor}
+                onChange={handleChange}
+                label="Profesor"
+                disabled={loadingTeachers}
+                required
+              >
+                {teachers.map(teacher => (
+                  <MenuItem key={teacher.id} value={teacher.id}>
+                    {teacher.username}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <Grid container spacing={2} alignItems="flex-end">
+              <Grid item xs={6}>
+                <TextField
+                  label="Fecha de Inicio"
+                  type="date"
+                  name="fecha_inicio"
+                  value={formData.fecha_inicio}
+                  onChange={handleChange}
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  required
+                  inputProps={{
+                    min: new Date().toISOString().split('T')[0]
+                  }}
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  label="Fecha de Fin"
+                  type="date"
+                  name="fecha_fin"
+                  value={formData.fecha_fin}
+                  onChange={handleChange}
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  required
+                  inputProps={{
+                    min: formData.fecha_inicio || new Date().toISOString().split('T')[0]
+                  }}
+                />
+              </Grid>
+            </Grid>
+
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Typography variant="body1" sx={{ mr: 2 }}>
+                Estado:
+              </Typography>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={formData.estado}
+                    onChange={handleStatusChange}
+                    name="estado"
+                    color="primary"
+                  />
+                }
+                label={formData.estado ? "Activo" : "Inactivo"}
+              />
+            </Box>
+
+            <TextField
+              label="URL de la imagen"
+              name="imagen_url"
+              value={formData.imagen_url}
+              onChange={handleChange}
+              fullWidth
+            />
+
+            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+              <Button 
+                variant="outlined" 
+                onClick={onClose}
+                sx={{ borderRadius: '20px' }}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                type="submit" 
+                variant="contained" 
+                sx={{ borderRadius: '20px' }}
+                disabled={!isFormValid || isSubmitting}
+              >
+                {isSubmitting ? 'Creando...' : 'Crear Curso'}
+              </Button>
+            </Box>
+          </Stack>
         </form>
       </Box>
     </Modal>
