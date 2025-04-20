@@ -1,6 +1,10 @@
 export const MENU_OPTIONS = {
   admin: [
     {
+      label: "Inicio",
+      url: "/dashboard", 
+    },
+    {
       label: "Usuarios",
       url: "/admin/manage/users",
       subPages: [
@@ -10,22 +14,24 @@ export const MENU_OPTIONS = {
       ],
     },
     {
-      label: "Cursos",
+      label: "Materiales del Curso",
       url: "/admin/manage/courses",
       subPages: [
-        { label: "Todos", url: "/admin/manage/courses/all" },
-        { label: "Inscripciones", url: "/admin/manage/courses/enrollments" },
+        { label: "Cursos", url: "/admin/manage/courses/" },
+        { label: "Unidades", url: "/admin/manage/courses/units" },
+        { label: "Temas", url: "/admin/manage/courses/topics" },
+        { label: "Tareas", url: "/admin/manage/courses/tasks" },
       ],
     },
     {
-      label: "Configuración",
-      url: "/admin/manage/configuration",
+      label: "Perfil",
+      url: "/admin/manage/profile",
     },
   ],
   teacher: [
     {
       label: "Mis Cursos",
-      url: "/teacher/courses",
+      url: "/teacher/assignments/courses/manage",
       subPages: [
         { label: "Gestionar", url: "/teacher/courses/manage" },
         { label: "Calificaciones", url: "/teacher/courses/grades" },
@@ -46,12 +52,12 @@ export const MENU_OPTIONS = {
       url: "/student/assignments",
     },
     {
-      label: "Calificaciones",
-      url: "/student/grades",
+      label: "Cursos Completados",
+      url: "/student/passed-courses",
     },
     {
-      label: "Cursos Aprobados",
-      url: "/student/passed-courses",
+      label: "Más Cursos",
+      url: "/student/more-courses",
     },
   ],
 };
@@ -67,6 +73,9 @@ export const PROTECTED_ROUTES = {
     "/admin/manage/courses",
     "/admin/manage/courses/all",
     "/admin/manage/courses/enrollments",
+    // In PROTECTED_ROUTES.admin array, add:
+      "/admin/manage/courses/units",
+      "/admin/manage/courses/:courseId/unidades",
   ],
   teacher: [
     "/",

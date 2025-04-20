@@ -7,16 +7,27 @@ import AdminDashboard from "../../components/Dashboard/AdminDashboard";
 import TeacherDashboard from "../../components/Dashboard/TeacherDashboard";
 import StudentDashboard from "../../components/Dashboard/StudentDashboard";
 import { Box } from "@mui/material";
+import Cookies from "js-cookie";
 
 const Dashboard = () => {
-  const { user } = useContext(AuthContext);
+  const { user, validateToken } = useContext(AuthContext);
   const router = useRouter();
 
   useEffect(() => {
-    if (!user) {
-      router.push("/login");
-    }
-  }, [user, router]);
+    const checkAuth = async () => {
+      const token = Cookies.get("accessToken");
+      if (!token) {
+        router.push("/login");
+        return;
+      }
+
+      if (!user) {
+        await validateToken();
+      }
+    };
+
+    checkAuth();
+  }, [user, router, validateToken]);
 
   const renderDashboard = () => {
     switch (user?.rol) {
@@ -31,10 +42,11 @@ const Dashboard = () => {
     }
   };
 
+  // Show loading or null while checking authentication
   if (!user) return null;
 
   return (
-    <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <Box sx={{ minHeight: "100vh", minWidth: "100vw", display: "flex", flexDirection: "column" }}>
       <DashboardLayout>{renderDashboard()}</DashboardLayout>
     </Box>
   );

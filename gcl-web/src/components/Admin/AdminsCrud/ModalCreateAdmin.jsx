@@ -1,107 +1,190 @@
 import React, { useState } from 'react';
 import {
-  Modal,
   Box,
-  Typography,
+  Modal,
   TextField,
   Button,
-  Stack
+  Typography,
+  IconButton,
+  InputAdornment
 } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 
-const style = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: 400,
-  bgcolor: 'background.paper',
-  borderRadius: 2,
-  boxShadow: 24,
-  p: 4,
-};
-
-const ModalCreateAdmin = ({ open, handleClose, handleCreate }) => {
+const ModalCreateAdmin = ({ open, onClose, onCreate }) => {
   const [formData, setFormData] = useState({
     username: '',
+    password: '',
+    confirmPassword: '',
     nombre_completo: '',
-    email: '',
-    password: ''
+    email: ''
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    handleCreate({
-      ...formData,
-      rol: 'admin',
-      fecha_creacion: new Date().toISOString()
-    });
+    // Validación básica
+    const newErrors = {};
+    if (!formData.username) newErrors.username = 'El nombre de usuario es requerido';
+    if (!formData.password) newErrors.password = 'La contraseña es requerida';
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Las contraseñas no coinciden';
+    }
+    if (!formData.nombre_completo) newErrors.nombre_completo = 'El nombre completo es requerido';
+    if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Se requiere un correo válido';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    // Crear objeto de administrador
+    const newAdmin = {
+      username: formData.username,
+      password: formData.password,
+      nombre_completo: formData.nombre_completo,
+      email: formData.email,
+      rol: 'admin'
+    };
+
+    onCreate(newAdmin);
+    handleClose();
+  };
+
+  const handleClose = () => {
     setFormData({
       username: '',
+      password: '',
+      confirmPassword: '',
       nombre_completo: '',
-      email: '',
-      password: ''
+      email: ''
     });
-    handleClose();
+    setErrors({});
+    onClose();
   };
 
   return (
     <Modal
       open={open}
       onClose={handleClose}
-      aria-labelledby="modal-create-admin"
+      sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
     >
-      <Box sx={style}>
-        <Typography variant="h6" component="h2" gutterBottom>
-          Add New Admin
-        </Typography>
+      <Box
+        sx={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          width: '500px',
+          boxShadow: 24,
+          p: 3
+        }}
+      >
+        <Box
+          sx={{
+            backgroundColor: '#1976d2',
+            color: '#fff',
+            borderRadius: '12px 12px 0 0',
+            p: 2,
+            mb: 2
+          }}
+        >
+          <Typography variant="h6">Crear Nuevo Administrador</Typography>
+        </Box>
         <form onSubmit={handleSubmit}>
-          <Stack spacing={2}>
-            <TextField
-              name="username"
-              label="Username"
-              value={formData.username}
-              onChange={handleChange}
-              fullWidth
-              required
-            />
-            <TextField
-              name="nombre_completo"
-              label="Full Name"
-              value={formData.nombre_completo}
-              onChange={handleChange}
-              fullWidth
-              required
-            />
-            <TextField
-              name="email"
-              label="Email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              fullWidth
-              required
-            />
-            <TextField
-              name="password"
-              label="Password"
-              type="password"
-              value={formData.password}
-              onChange={handleChange}
-              fullWidth
-              required
-            />
-            <Button type="submit" variant="contained">
-              Create Admin
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Nombre de Usuario"
+            name="username"
+            value={formData.username}
+            onChange={handleChange}
+            error={!!errors.username}
+            helperText={errors.username}
+          />
+
+          <TextField
+            fullWidth
+            label="Contraseña"
+            name="password"
+            type={showPassword ? 'text' : 'password'}
+            value={formData.password}
+            onChange={handleChange}
+            error={!!errors.password}
+            helperText={errors.password}
+            margin="normal"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowPassword(!showPassword)}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
+          />
+
+          <TextField
+            fullWidth
+            label="Confirmar Contraseña"
+            name="confirmPassword"
+            type={showPassword ? 'text' : 'password'}
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            error={!!errors.confirmPassword}
+            helperText={errors.confirmPassword}
+            margin="normal"
+          />
+
+          <TextField
+            fullWidth
+            label="Nombre Completo"
+            name="nombre_completo"
+            value={formData.nombre_completo}
+            onChange={handleChange}
+            error={!!errors.nombre_completo}
+            helperText={errors.nombre_completo}
+            margin="normal"
+          />
+
+          <TextField
+            fullWidth
+            label="Correo Electrónico"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleChange}
+            error={!!errors.email}
+            helperText={errors.email}
+            margin="normal"
+          />
+
+          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+            <Button 
+              variant="outlined" 
+              onClick={handleClose}
+              sx={{ borderRadius: '20px' }}
+            >
+              Cancelar
             </Button>
-          </Stack>
+            <Button 
+              type="submit" 
+              variant="contained" 
+              sx={{ borderRadius: '20px' }}
+            >
+              Crear
+            </Button>
+          </Box>
         </form>
       </Box>
     </Modal>

@@ -12,17 +12,43 @@ const DashboardLayout = ({ children }) => {
       sx={{
         display: "flex",
         minHeight: "100vh",
-        bgcolor: "#f5f5f7",
+        bgcolor: "rgba(255, 255, 255, 0)",
         overflow: "hidden",
       }}
     >
+      <Box
+        sx={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "240px",
+          height: "64px",
+          bgcolor: "white",
+          zIndex: 1300,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
+        }}
+      >
+        <img
+          src="/logo.png" // Asegúrate de poner tu imagen en la carpeta public
+          alt="Logo"
+          style={{
+            maxWidth: "180px",
+            maxHeight: "40px",
+            objectFit: "contain",
+          }}
+        />
+      </Box>
+
       <AppBar
         position="fixed"
         elevation={0}
         sx={{
           width: { sm: `calc(100% - 240px)` },
           ml: { sm: "240px" },
-          bgcolor: "rgba(255, 255, 255, 0.8)",
+          bgcolor: "white",
           backdropFilter: "blur(20px)",
           borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
         }}
@@ -34,6 +60,16 @@ const DashboardLayout = ({ children }) => {
             sx={{
               flexGrow: 1,
               color: "#1a1a1a",
+              fontWeight: 500,
+            }}
+          >
+            {user?.username?.toUpperCase()}
+          </Typography>
+          <Typography
+            variant="body1"
+            sx={{
+              color: "#666",
+              mr: 2,
               fontWeight: 500,
             }}
           >
@@ -59,7 +95,7 @@ const DashboardLayout = ({ children }) => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          p: 0,
           width: "100%",
           minHeight: "100vh",
           overflow: "auto",

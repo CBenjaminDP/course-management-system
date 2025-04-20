@@ -10,6 +10,7 @@ class Curso(models.Model):
     fecha_inicio = models.DateField()
     fecha_fin = models.DateField()
     estado = models.BooleanField(default=True)
-
+    imagen_url = models.URLField(max_length=500, blank=True, null=True)
+    
     def __str__(self):
         return self.nombre

@@ -13,9 +13,7 @@ from rest_framework.permissions import IsAuthenticated
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def listar_cursos(request):
-    #Obtener todas la instancias del objeto de la BD
     cursos = Curso.objects.all()
-    #Crear una variable en formato de diccionario por que le JSONResponse necesita un diccionario
     data = [
         {
             'id': curso.id,
@@ -27,11 +25,38 @@ def listar_cursos(request):
             },
             'fecha_inicio': curso.fecha_inicio.isoformat() if curso.fecha_inicio else None,
             'fecha_fin': curso.fecha_fin.isoformat() if curso.fecha_fin else None,
-            'estado': curso.estado
+            'estado': curso.estado,
+            'imagen_url': curso.imagen_url,
         } 
         for curso in cursos
     ]
     return JsonResponse(data, safe=False)
+
+@csrf_exempt
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def obtener_curso(request, id):
+    if request.method == 'GET':
+        curso = get_object_or_404(Curso, id=id)
+        try:
+            data = {
+                'id': curso.id,
+                'nombre': curso.nombre,
+                'descripcion': curso.descripcion,
+                'profesor': {
+                    'id': curso.profesor.id,
+                    'nombre': curso.profesor.username,
+                    'email': curso.profesor.email
+                },
+                'fecha_inicio': curso.fecha_inicio,
+                'fecha_fin': curso.fecha_fin,
+                'estado': curso.estado,
+                'imagen_url': curso.imagen_url,
+            }
+            return JsonResponse(data, status=200)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
 
 #Funcion que registre sin recargar la pagina osea sin hacer render 
 @csrf_exempt
@@ -54,7 +79,8 @@ def registrar_curso(request):
                 profesor=profesor,  # Asignar la instancia del Usuario
                 fecha_inicio=data['fecha_inicio'],
                 fecha_fin=data['fecha_fin'],
-                estado=data['estado']
+                estado=data['estado'],
+                imagen_url=data.get('imagen_url', None),
             )
             #Retornar un JSON con un mensaje de exito y el id del curso creado
             return JsonResponse({'mensaje': 'Curso creado correctamente', 'id': curso.id}, status=201)
@@ -89,6 +115,7 @@ def actualizar_curso(request, id):
             curso.fecha_inicio = data['fecha_inicio']
             curso.fecha_fin = data['fecha_fin']
             curso.estado = data['estado']
+            curso.imagen_url = data.get('imagen_url', curso.imagen_url)
             curso.save()
             return JsonResponse({'mensaje': 'Curso actualizado correctamente'}, status=200)
         except Usuario.DoesNotExist:
@@ -117,39 +144,5 @@ def eliminar_curso(request, id):
             #Retornar un JSON con un mensaje de error
             return JsonResponse({'error': str(e)}, status=400)
     #Si el metodo no es DELETE
-    return JsonResponse({'error': 'Método no permitido'}, status=405)
-
-
-#Funcion que obtiene un curso
-@csrf_exempt
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def obtener_curso(request, id):
-    #Si el metodo es GET
-    if request.method == 'GET':
-        #Obtener el curso
-        curso = get_object_or_404(Curso, id=id)
-        try:
-            #Crear un diccionario con los datos del curso
-            data = {
-                'id': curso.id,
-                'nombre': curso.nombre,
-                'descripcion': curso.descripcion,
-                'profesor': {
-                    'id': curso.profesor.id,
-                    'nombre': curso.profesor.username,
-                    'email': curso.profesor.email
-                },
-                'fecha_inicio': curso.fecha_inicio,
-                'fecha_fin': curso.fecha_fin,
-                'estado': curso.estado
-            }
-            #Retornar un JSON con los datos del curso
-            return JsonResponse(data, status=200)
-        #Si hay un error
-        except Exception as e:
-            #Retornar un JSON con un mensaje de error
-            return JsonResponse({'error': str(e)}, status=400)
-    #Si el metodo no es GET
     return JsonResponse({'error': 'Método no permitido'}, status=405)
 

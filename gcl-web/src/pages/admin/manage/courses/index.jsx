@@ -1,30 +1,15 @@
 import React from 'react';
-import { 
-  Box,
-  Container,
-  Typography,
-  Paper,
-  Grid
-} from '@mui/material';
+import { Container } from '@mui/material';
+import CrudCourses from '../../../../components/Admin/CoursesCrud/CrudCourses';
+import DashboardLayout from '../../../../layouts/DashboardLayout';
 
 const CoursesManagement = () => {
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ mt: 4, mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Course Management
-        </Typography>
-        <Paper elevation={3} sx={{ p: 3 }}>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Typography variant="h6">
-                Welcome to Course Management System
-              </Typography>
-            </Grid>
-          </Grid>
-        </Paper>
-      </Box>
-    </Container>
+    <DashboardLayout>
+      <Container maxWidth="lg">
+        <CrudCourses />
+      </Container>
+    </DashboardLayout>
   );
 };
 
