@@ -163,3 +163,16 @@ def format_uuid(uuid_string):
     # Insert hyphens in correct positions
     formatted_uuid = f"{clean_uuid[:8]}-{clean_uuid[8:12]}-{clean_uuid[12:16]}-{clean_uuid[16:20]}-{clean_uuid[20:]}"
     return formatted_uuid
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def obtener_usuario_actual(request):
+    usuario = request.user
+    data = {
+        'id': usuario.id,
+        'username': usuario.username,
+        'email': usuario.email,
+        'rol': usuario.rol,
+        # otros campos que necesites
+    }
+    return JsonResponse(data)

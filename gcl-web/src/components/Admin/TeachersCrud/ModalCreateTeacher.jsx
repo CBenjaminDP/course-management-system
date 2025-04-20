@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   Modal,
@@ -6,17 +6,17 @@ import {
   Button,
   Typography,
   IconButton,
-  InputAdornment
-} from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
+  InputAdornment,
+} from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
-const ModalCreateTeacher = ({ open, handleClose, handleCreate }) => {
+const ModalCreateTeacher = ({ open, onClose, onCreate }) => {
   const [formData, setFormData] = useState({
-    username: '',
-    password: '',
-    confirmPassword: '',
-    nombre_completo: '',
-    email: ''
+    username: "",
+    password: "",
+    confirmPassword: "",
+    nombre_completo: "",
+    email: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
@@ -24,21 +24,24 @@ const ModalCreateTeacher = ({ open, handleClose, handleCreate }) => {
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
-  const handleSubmit = () => {
-    // Basic validation
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    // Validación básica
     const newErrors = {};
-    if (!formData.username) newErrors.username = 'Username is required';
-    if (!formData.password) newErrors.password = 'Password is required';
+    if (!formData.username)
+      newErrors.username = "El nombre de usuario es requerido";
+    if (!formData.password) newErrors.password = "La contraseña es requerida";
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = "Las contraseñas no coinciden";
     }
-    if (!formData.nombre_completo) newErrors.nombre_completo = 'Full name is required';
+    if (!formData.nombre_completo)
+      newErrors.nombre_completo = "El nombre completo es requerido";
     if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Valid email is required';
+      newErrors.email = "Se requiere un correo válido";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -46,108 +49,144 @@ const ModalCreateTeacher = ({ open, handleClose, handleCreate }) => {
       return;
     }
 
-    // Create teacher object
     const newTeacher = {
       username: formData.username,
       password: formData.password,
       nombre_completo: formData.nombre_completo,
       email: formData.email,
-      rol: 'teacher'
+      rol: "teacher",
     };
 
-    handleCreate(newTeacher);
-    handleClose();
+    const success = await onCreate(newTeacher);
+    if (success) {
+      setFormData({
+        username: "",
+        password: "",
+        confirmPassword: "",
+        nombre_completo: "",
+        email: "",
+      });
+      setErrors({});
+    }
   };
 
   return (
-    <Modal open={open} onClose={handleClose}>
-      <Box sx={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 400,
-        bgcolor: 'background.paper',
-        boxShadow: 24,
-        p: 4,
-        borderRadius: 2
-      }}>
-        <Typography variant="h6" mb={2}>Create New Teacher</Typography>
-
-        <TextField
-          fullWidth
-          label="Username"
-          name="username"
-          value={formData.username}
-          onChange={handleChange}
-          error={!!errors.username}
-          helperText={errors.username}
-          margin="normal"
-        />
-
-        <TextField
-          fullWidth
-          label="Password"
-          name="password"
-          type={showPassword ? 'text' : 'password'}
-          value={formData.password}
-          onChange={handleChange}
-          error={!!errors.password}
-          helperText={errors.password}
-          margin="normal"
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  onClick={() => setShowPassword(!showPassword)}
-                  edge="end"
-                >
-                  {showPassword ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            )
+    <Modal
+      open={open}
+      onClose={onClose}
+      sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+    >
+      <Box
+        sx={{
+          backgroundColor: "white",
+          borderRadius: "12px",
+          width: "500px",
+          boxShadow: 24,
+          p: 3,
+        }}
+      >
+        <Box
+          sx={{
+            backgroundColor: "#1976d2",
+            color: "#fff",
+            borderRadius: "12px 12px 0 0",
+            p: 2,
+            mb: 2,
           }}
-        />
-
-        <TextField
-          fullWidth
-          label="Confirm Password"
-          name="confirmPassword"
-          type={showPassword ? 'text' : 'password'}
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          error={!!errors.confirmPassword}
-          helperText={errors.confirmPassword}
-          margin="normal"
-        />
-
-        <TextField
-          fullWidth
-          label="Full Name"
-          name="nombre_completo"
-          value={formData.nombre_completo}
-          onChange={handleChange}
-          error={!!errors.nombre_completo}
-          helperText={errors.nombre_completo}
-          margin="normal"
-        />
-
-        <TextField
-          fullWidth
-          label="Email"
-          name="email"
-          type="email"
-          value={formData.email}
-          onChange={handleChange}
-          error={!!errors.email}
-          helperText={errors.email}
-          margin="normal"
-        />
-
-        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmit}>Create</Button>
+        >
+          <Typography variant="h6">Crear Nuevo Profesor</Typography>
         </Box>
+        <form onSubmit={handleSubmit}>
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Nombre de Usuario"
+            value={formData.username}
+            onChange={(e) =>
+              setFormData({ ...formData, username: e.target.value })
+            }
+            error={!!errors.username}
+            helperText={errors.username}
+          />
+
+          <TextField
+            fullWidth
+            label="Contraseña"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            value={formData.password}
+            onChange={handleChange}
+            error={!!errors.password}
+            helperText={errors.password}
+            margin="normal"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowPassword(!showPassword)}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          <TextField
+            fullWidth
+            label="Confirmar Contraseña"
+            name="confirmPassword"
+            type={showPassword ? "text" : "password"}
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            error={!!errors.confirmPassword}
+            helperText={errors.confirmPassword}
+            margin="normal"
+          />
+
+          <TextField
+            fullWidth
+            label="Nombre Completo"
+            name="nombre_completo"
+            value={formData.nombre_completo}
+            onChange={handleChange}
+            error={!!errors.nombre_completo}
+            helperText={errors.nombre_completo}
+            margin="normal"
+          />
+
+          <TextField
+            fullWidth
+            label="Correo Electrónico"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleChange}
+            error={!!errors.email}
+            helperText={errors.email}
+            margin="normal"
+          />
+
+          <Box
+            sx={{ mt: 3, display: "flex", justifyContent: "flex-end", gap: 2 }}
+          >
+            <Button
+              variant="outlined"
+              onClick={onClose}
+              sx={{ borderRadius: "20px" }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{ borderRadius: "20px" }}
+            >
+              Crear
+            </Button>
+          </Box>
+        </form>
       </Box>
     </Modal>
   );
