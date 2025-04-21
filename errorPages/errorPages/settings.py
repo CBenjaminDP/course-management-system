@@ -13,6 +13,11 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import pymysql
 pymysql.install_as_MySQLdb()
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -123,7 +128,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'course',
         'USER': 'root',
-        'PASSWORD': 'root',
+        'PASSWORD': 'rootroot',
         'PORT': '3306',
         'HOST': 'localhost',
 
@@ -181,4 +186,14 @@ LOGIN_REDIRECT_URL = '/home' # Dónde irán los usuarios tras iniciar sesión
 LOGOUT_REDIRECT_URL = '/users/login/'
 
 AUTH_USER_MODEL = 'usuarios.Usuario'
+
+
+# SendGrid settings
+import os
+from dotenv import load_dotenv
+
+# Cargar variables de entorno desde .env
+load_dotenv()
+
+SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
 
