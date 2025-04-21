@@ -1,11 +1,13 @@
 import json
+import random
+import string
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from .models import Usuario
 from .forms import UsuarioForm
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import check_password, make_password
 from django.views.decorators.csrf import csrf_exempt
 from uuid import UUID
 
@@ -28,22 +30,94 @@ def listar_usuarios(request):
     ]
     return JsonResponse(data, safe=False)
 
+# Añade esta importación al inicio del archivo
+from .email_service import enviar_correo_bienvenida
+
+def generate_password(length=10):
+    """Generate a secure random password"""
+    characters = string.ascii_letters + string.digits + string.punctuation
+    # Ensure at least one of each required character type
+    password = random.choice(string.ascii_lowercase)
+    password += random.choice(string.ascii_uppercase)
+    password += random.choice(string.digits)
+    password += random.choice("@$!%*?&")
+    
+    # Fill the rest with random characters
+    password += ''.join(random.choice(characters) for _ in range(length - 4))
+    
+    # Shuffle the password
+    password_list = list(password)
+    random.shuffle(password_list)
+    return ''.join(password_list)
+
+def generate_username(nombre_completo, max_length=12):
+    """Generate a username based on the user's full name with length limit"""
+    # Remove spaces and special characters
+    base_username = ''.join(e for e in nombre_completo if e.isalnum()).lower()
+    
+    # Limit the base username length to max_length characters
+    if len(base_username) > max_length:
+        # Take first part of the name to keep it recognizable
+        base_username = base_username[:max_length]
+    
+    # Add a random number to make it unique
+    random_suffix = ''.join(random.choices(string.digits, k=4))
+    return base_username + random_suffix
+
 @csrf_exempt
 @permission_classes([IsAuthenticated])
 def registrar_usuario(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
+            
+            # Generate username based on nombre_completo
+            nombre_completo = data['nombre_completo']
+            username = generate_username(nombre_completo)
+            
+            # Generate a secure random password
+            password = generate_password()
+            
+            # Create user with generated credentials
             usuario = Usuario.objects.create_user(
-                username=data['username'],
-                password=data['password'],
-                nombre_completo=data['nombre_completo'],
+                username=username,
+                password=password,
+                nombre_completo=nombre_completo,
                 email=data['email'],
                 rol=data['rol']
             )
-            return JsonResponse({'mensaje': 'Usuario creado correctamente', 'id': usuario.id}, status=201)
+            
+            # Enviar correo de bienvenida con las credenciales generadas
+            resultado_email = enviar_correo_bienvenida(
+                email_destinatario=data['email'],
+                nombre_usuario=username,
+                rol=data['rol'],
+                password=password  # Enviar la contraseña generada por correo
+            )
+            
+            # Crear respuesta
+            response_data = {
+                'mensaje': 'Usuario creado correctamente', 
+                'id': usuario.id,
+                'username': username,  # Include generated username in response
+                'password': password   # Include password in response for debugging (remove in production)
+            }
+            
+            # Añadir información sobre el envío del correo
+            if resultado_email['success']:
+                response_data['email_enviado'] = True
+            else:
+                response_data['email_enviado'] = False
+                response_data['email_error'] = resultado_email['error'] if 'error' in resultado_email else resultado_email['message']
+            
+            return JsonResponse(response_data, status=201)
+            
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=400)
+            import traceback
+            error_details = traceback.format_exc()
+            print(f"Error al registrar usuario: {str(e)}")
+            print(f"Detalles del error: {error_details}")
+            return JsonResponse({'error': str(e), 'details': error_details}, status=400)
     return JsonResponse({'error': 'Método no permitido'}, status=405)
 
 @csrf_exempt
@@ -176,3 +250,35 @@ def obtener_usuario_actual(request):
         # otros campos que necesites
     }
     return JsonResponse(data)
+
+
+# Add this function to your views.py
+@csrf_exempt
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def cambiar_password(request, id):
+    if request.method == 'PUT':
+        try:
+            usuario = get_object_or_404(Usuario, id=id)
+            
+            # Check if the user making the request is the same as the user being modified
+            # or if the user is an admin
+            if str(request.user.id) != str(usuario.id) and request.user.rol != 'admin':
+                return JsonResponse({'error': 'No tienes permiso para cambiar esta contraseña'}, status=403)
+            
+            data = json.loads(request.body)
+            current_password = data.get('current_password')
+            new_password = data.get('new_password')
+            
+            # Verify current password
+            if not check_password(current_password, usuario.password):
+                return JsonResponse({'error': 'La contraseña actual es incorrecta'}, status=400)
+            
+            # Update password
+            usuario.set_password(new_password)
+            usuario.save()
+            
+            return JsonResponse({'mensaje': 'Contraseña actualizada correctamente'}, status=200)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'error': 'Método no permitido'}, status=405)

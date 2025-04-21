@@ -11,7 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 
 #Metodo que devuelve el JSON
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+# Removed @permission_classes([IsAuthenticated]) to allow public access
 def listar_cursos(request):
     cursos = Curso.objects.all()
     data = [
