@@ -16,7 +16,44 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 import Cookies from 'js-cookie';
-import Swal from 'sweetalert2';
+import { useAlert } from '../../../context/AlertContext'; // Import the alert context
+import { styled } from '@mui/material/styles';
+
+// Define theme colors to match login
+const theme = {
+  primary: "#FFD700", // Gold
+  secondary: "#4A4A4A",
+  text: "#333333",
+  hover: "#E6C200",
+  background: "#f8f9fa"
+};
+
+// Styled components for form elements
+const StyledTextField = styled(TextField)(() => ({
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "8px",
+    transition: "all 0.3s",
+    "&:hover .MuiOutlinedInput-notchedOutline": {
+      borderColor: theme.primary,
+    },
+    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+      borderColor: theme.primary,
+      borderWidth: "1px",
+    },
+  },
+  "& .MuiFormLabel-root.Mui-focused": {
+    color: theme.secondary,
+  },
+}));
+
+const StyledButton = styled(Button)(() => ({
+  borderRadius: "8px",
+  padding: "10px 20px",
+  textTransform: "none",
+  fontWeight: "600",
+  boxShadow: "none",
+  transition: "all 0.3s",
+}));
 
 const ModalUpdateCourse = ({ open, onClose, onUpdate, course }) => {
   const [formData, setFormData] = useState({
@@ -31,6 +68,7 @@ const ModalUpdateCourse = ({ open, onClose, onUpdate, course }) => {
   const [teachers, setTeachers] = useState([]);
   const [loadingTeachers, setLoadingTeachers] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { showAlert } = useAlert(); // Use the alert context
 
   useEffect(() => {
     const fetchTeachers = async () => {
@@ -99,18 +137,20 @@ const ModalUpdateCourse = ({ open, onClose, onUpdate, course }) => {
       // Close modal first
       onClose();
       
-      // Then show success message
-      await Swal.fire({
-        title: 'Éxito',
-        text: 'Curso actualizado correctamente',
-        icon: 'success'
+      // Then show success message using alert context
+      showAlert({
+        message: 'Curso actualizado correctamente',
+        severity: 'success'
       });
       
       // Finally trigger refresh
       onUpdate();
     } catch (error) {
       console.error('Error updating course:', error);
-      await Swal.fire('Error', 'No se pudo actualizar el curso', 'error');
+      showAlert({
+        message: 'No se pudo actualizar el curso',
+        severity: 'error'
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -126,8 +166,8 @@ const ModalUpdateCourse = ({ open, onClose, onUpdate, course }) => {
         p: 3 
       }}>
         <Box sx={{ 
-          backgroundColor: '#1976d2', 
-          color: '#fff', 
+          backgroundColor: theme.primary, 
+          color: theme.text, 
           borderRadius: '12px 12px 0 0', 
           p: 2, 
           mb: 2 
@@ -137,7 +177,7 @@ const ModalUpdateCourse = ({ open, onClose, onUpdate, course }) => {
         
         <form onSubmit={handleSubmit}>
           <Stack spacing={3}>
-            <TextField
+            <StyledTextField
               label="Nombre del Curso"
               name="nombre"
               value={formData.nombre}
@@ -146,7 +186,7 @@ const ModalUpdateCourse = ({ open, onClose, onUpdate, course }) => {
               required
             />
             
-            <TextField
+            <StyledTextField
               label="Descripción"
               name="descripcion"
               value={formData.descripcion}
@@ -165,6 +205,18 @@ const ModalUpdateCourse = ({ open, onClose, onUpdate, course }) => {
                 label="Profesor"
                 disabled={loadingTeachers}
                 required
+                sx={{
+                  borderRadius: "8px",
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "rgba(0, 0, 0, 0.23)",
+                  },
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: theme.primary,
+                  },
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: theme.primary,
+                  }
+                }}
               >
                 {teachers.map(teacher => (
                   <MenuItem key={teacher.id} value={teacher.id}>
@@ -233,21 +285,40 @@ const ModalUpdateCourse = ({ open, onClose, onUpdate, course }) => {
             />
 
             <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-              <Button 
+              <StyledButton 
                 variant="outlined" 
                 onClick={onClose}
-                sx={{ borderRadius: '20px' }}
+                sx={{ 
+                  borderRadius: '20px',
+                  borderColor: theme.secondary,
+                  color: theme.secondary,
+                  '&:hover': {
+                    borderColor: theme.secondary,
+                    backgroundColor: 'rgba(74, 74, 74, 0.04)'
+                  }
+                }}
               >
                 Cancelar
-              </Button>
-              <Button 
+              </StyledButton>
+              <StyledButton 
                 type="submit" 
                 variant="contained" 
-                sx={{ borderRadius: '20px' }}
+                sx={{ 
+                  borderRadius: '20px',
+                  backgroundColor: theme.primary,
+                  color: theme.text,
+                  '&:hover': {
+                    backgroundColor: theme.hover
+                  },
+                  '&.Mui-disabled': {
+                    backgroundColor: 'rgba(255, 215, 0, 0.5)',
+                    color: 'rgba(51, 51, 51, 0.7)'
+                  }
+                }}
                 disabled={isSubmitting}
               >
                 {isSubmitting ? 'Actualizando...' : 'Actualizar Curso'}
-              </Button>
+              </StyledButton>
             </Box>
           </Stack>
         </form>

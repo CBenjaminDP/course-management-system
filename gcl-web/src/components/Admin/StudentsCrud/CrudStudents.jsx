@@ -12,6 +12,9 @@ import {
   CircularProgress,
   Typography,
   Paper,
+  Card,
+  CardHeader,
+  CardContent,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -20,42 +23,88 @@ import ModalUpdateStudent from "./ModalUpdateStudent";
 import Cookies from "js-cookie";
 import axios from "axios";
 import { tableStyles } from "../../../styles/tableStyles";
-import Swal from "sweetalert2";
-import { Card, CardHeader, CardContent } from "@mui/material";
-import { Add } from "@mui/icons-material";
-import { Refresh } from "@mui/icons-material";
+import { useAlert } from "../../../context/AlertContext";
+import { Add, Refresh } from "@mui/icons-material";
+import { styled } from "@mui/material/styles";
 
-const styles = {
-  card: {
-    margin: "24px",
-    boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
-    borderRadius: "12px",
+// Define theme colors to match teacher components
+const theme = {
+  primary: "#FFD700", // Gold
+  secondary: "#4A4A4A",
+  text: "#333333",
+  hover: "#E6C200",
+  background: "#f8f9fa",
+};
+
+// Styled components
+const StyledCard = styled(Card)(({ theme }) => ({
+  margin: "24px",
+  boxShadow: "0 8px 24px rgba(0, 0, 0, 0.06)",
+  borderRadius: "16px",
+  overflow: "hidden",
+  backgroundColor: "#fff",
+  transition: "transform 0.3s, box-shadow 0.3s",
+  "&:hover": {
+    boxShadow: "0 12px 32px rgba(0, 0, 0, 0.09)",
+    transform: "translateY(-2px)",
   },
+}));
+
+const StyledButton = styled(Button)(({ theme }) => ({
+  borderRadius: "8px",
+  padding: "8px 16px",
+  textTransform: "none",
+  fontWeight: "600",
+  boxShadow: "none",
+  transition: "all 0.3s",
+}));
+
+// Update styles
+const styles = {
   header: {
-    backgroundColor: "#1976d2",
-    color: "#fff",
-    borderRadius: "12px 12px 0 0",
+    backgroundColor: "#FFD700",
+    color: "#333333",
+    padding: "16px 24px",
+    borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
   },
   addButton: {
-    margin: "16px",
-    backgroundColor: "#4caf50",
-    borderRadius: "20px",
-    padding: "8px 24px",
+    backgroundColor: "#FFD700",
+    color: "#333333",
     "&:hover": {
-      backgroundColor: "#388e3c",
+      backgroundColor: "#E6C200",
+      boxShadow: "0 4px 12px rgba(255, 215, 0, 0.3)",
     },
   },
   refreshButton: {
-    margin: "0 8px",
-    backgroundColor: "#1976d2",
-    borderRadius: "20px",
+    backgroundColor: "#f5f5f5",
+    color: "#4A4A4A",
+    marginLeft: "8px",
     "&:hover": {
-      backgroundColor: "#1565c0",
+      backgroundColor: "#e0e0e0",
+      transform: "rotate(180deg)",
+      transition: "transform 0.5s",
     },
+  },
+  tableHeader: {
+    backgroundColor: "#f8f9fa",
+  },
+  tableHeaderCell: {
+    fontWeight: "600",
+    color: "#4A4A4A",
+  },
+  actionButton: {
+    padding: "4px",
+  },
+  editIcon: {
+    color: "#FFD700",
+  },
+  deleteIcon: {
+    color: "#ff5252",
   },
 };
 
 const CrudStudents = () => {
+  const { showAlert, showConfirmation } = useAlert();
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -65,6 +114,7 @@ const CrudStudents = () => {
 
   const fetchStudents = async () => {
     try {
+      setLoading(true);
       const token = Cookies.get("accessToken");
       const response = await axios.get("http://localhost:8000/usuarios/", {
         headers: {
@@ -72,27 +122,21 @@ const CrudStudents = () => {
         },
       });
 
-      // Filter users to get only students
       const studentsData = response.data.filter(
         (user) => user.rol === "student"
       );
       setStudents(studentsData);
-      setError(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
       setLoading(false);
+    } catch (err) {
+      setError("Error al cargar los estudiantes");
+      setLoading(false);
+      console.error(err);
     }
   };
 
   useEffect(() => {
     fetchStudents();
   }, []);
-
-  const handleRefresh = async () => {
-    setLoading(true);
-    await fetchStudents();
-  };
 
   const handleCreateStudent = async (newStudent) => {
     try {
@@ -112,126 +156,138 @@ const CrudStudents = () => {
       );
 
       if (response.status === 201) {
-        await fetchStudents();
-        setOpenModal(false); // Close the modal only on success
-        Swal.fire("Éxito", "Estudiante creado correctamente", "success");
-      }
-    } catch (err) {
-      Swal.fire("Error", "No se pudo crear el estudiante", "error");
-      console.error(err);
-      return false; // Return false to prevent modal closing on error
-    }
-  };
-
-  if (loading) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          mt: 4,
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 2,
-        }}
-      >
-        <Typography color="error">Error: {error}</Typography>
-        <Button
-          variant="contained"
-          onClick={handleRefresh}
-          sx={styles.refreshButton}
-        >
-          <Refresh style={{ marginRight: "8px" }} />
-          Recargar datos
-        </Button>
-      </Box>
-    );
-  }
-
-  const handleDelete = async (id) => {
-    try {
-      if (!id || typeof id !== "string") {
-        Swal.fire("Error", "ID de estudiante no válido", "error");
-        return;
-      }
-
-      const token = Cookies.get("accessToken");
-      const result = await Swal.fire({
-        title: "¿Estás seguro?",
-        text: "¡No podrás revertir esto!",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#3085d6",
-        cancelButtonColor: "#d33",
-        confirmButtonText: "Sí, eliminar!",
-      });
-
-      if (result.isConfirmed) {
-        const response = await axios.delete(
-          `http://localhost:8000/usuarios/eliminar/${id}/`,
+        const refreshResponse = await axios.get(
+          "http://localhost:8000/usuarios/",
           {
             headers: {
               Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            validateStatus: function (status) {
-              return true;
             },
           }
         );
 
-        if (response.status === 200) {
-          setStudents((prev) => prev.filter((student) => student.id !== id));
-          Swal.fire(
-            "¡Eliminado!",
-            "El estudiante ha sido eliminado.",
-            "success"
-          );
-        } else {
-          let errorMessage = `Error del servidor (${response.status})`;
-          if (response.data && response.data.message) {
-            errorMessage = response.data.message;
-          }
-          throw new Error(errorMessage);
+        const studentsData = refreshResponse.data.filter(
+          (user) => user.rol === "student"
+        );
+        setStudents(studentsData);
+        setOpenModal(false);
+        
+        // Simplified success message without sensitive information
+        let successMessage = "Estudiante creado correctamente";
+        
+        // Check if email was sent successfully
+        if (response.data.email_enviado) {
+          successMessage += ". Se ha enviado un correo con las credenciales al usuario.";
+        } else if (response.data.email_error) {
+          successMessage += ". Hubo un problema al enviar el correo de credenciales.";
         }
+        
+        // Use showAlert with simplified message
+        showAlert({
+          message: successMessage,
+          severity: "success",
+          duration: 4000,
+        });
+        
+        return true;
       }
+      return false;
     } catch (err) {
-      let errorMessage =
-        "No se pudo eliminar el estudiante. Error del servidor.";
-
-      if (err.response) {
-        if (err.response.status === 404) {
-          errorMessage = "El estudiante no fue encontrado.";
-        } else if (err.response.status === 500) {
-          errorMessage =
-            "Error interno del servidor. Por favor, inténtelo de nuevo más tarde.";
-        }
-      }
-
-      Swal.fire("Error", errorMessage, "error");
-      console.error("Error al eliminar:", err);
-      console.error("Error details:", err.response?.data);
+      // Simplified error message
+      showAlert({
+        message: err.response?.data?.error || "No se pudo crear el estudiante",
+        severity: "error",
+        duration: 6000,
+      });
+      console.error(err);
+      return false;
     }
   };
 
+  // Add the missing handleCreateClick function
   const handleCreateClick = () => {
     setOpenModal(true);
   };
 
-  const handleEditClick = (id) => {
-    const student = students.find((s) => s.id === id);
+  const handleEditClick = (student) => {
     setSelectedStudent(student);
     setOpenUpdateModal(true);
   };
 
+  // Add the missing handleDelete function
+  const handleDelete = async (id) => {
+    try {
+      if (!id || typeof id !== "string") {
+        showAlert({
+          message: "ID de estudiante no válido",
+          severity: "error",
+        });
+        return;
+      }
+
+      const token = Cookies.get("accessToken");
+      
+      showConfirmation({
+        title: "¿Estás seguro?",
+        message: "¡No podrás revertir esto!",
+        onConfirm: async () => {
+          try {
+            console.log("Deleting student with ID:", id);
+            const response = await axios.delete(
+              `http://localhost:8000/usuarios/eliminar/${id}/`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+                validateStatus: function (status) {
+                  return true;
+                },
+              }
+            );
+
+            if (response.status === 200) {
+              setStudents((prev) => prev.filter((student) => student.id !== id));
+              showAlert({
+                message: "El estudiante ha sido eliminado",
+                severity: "success",
+              });
+            } else {
+              let errorMessage = `Error del servidor (${response.status})`;
+              if (response.data && response.data.message) {
+                errorMessage = response.data.message;
+              }
+              throw new Error(errorMessage);
+            }
+          } catch (err) {
+            let errorMessage = "No se pudo eliminar el estudiante. Error del servidor.";
+
+            if (err.response) {
+              if (err.response.status === 404) {
+                errorMessage = "El estudiante no fue encontrado.";
+              } else if (err.response.status === 500) {
+                errorMessage = "Error interno del servidor. Por favor, inténtelo de nuevo más tarde.";
+              }
+            }
+
+            showAlert({
+              message: errorMessage,
+              severity: "error",
+            });
+            console.error("Error al eliminar:", err);
+            console.error("Error details:", err.response?.data);
+          }
+        },
+      });
+    } catch (err) {
+      showAlert({
+        message: "Error al procesar la solicitud",
+        severity: "error",
+      });
+      console.error(err);
+    }
+  };
+
+  // Add the missing handleUpdateStudent function
   const handleUpdateStudent = async (id, updatedData) => {
     try {
       const token = Cookies.get("accessToken");
@@ -248,7 +304,7 @@ const CrudStudents = () => {
 
       if (response.status === 200) {
         const refreshResponse = await axios.get(
-          "http://localhost:8000/usuarios/estudiantes/",
+          "http://localhost:8000/usuarios/",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -256,97 +312,108 @@ const CrudStudents = () => {
           }
         );
 
-        setStudents(refreshResponse.data);
-        Swal.fire("Éxito", "Estudiante actualizado correctamente", "success");
+        const studentsData = refreshResponse.data.filter(
+          (user) => user.rol === "student"
+        );
+        setStudents(studentsData);
+        setOpenUpdateModal(false);
+        showAlert({
+          message: "Estudiante actualizado correctamente",
+          severity: "success",
+        });
       }
     } catch (err) {
-      Swal.fire("Error", "No se pudo actualizar el estudiante", "error");
+      showAlert({
+        message: err.response?.data?.error || "No se pudo actualizar el estudiante",
+        severity: "error",
+      });
       console.error(err);
     }
   };
 
+  if (loading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+        <CircularProgress sx={{ color: theme.primary }} />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ textAlign: "center", mt: 4 }}>
+        <Typography color="error">{error}</Typography>
+      </Box>
+    );
+  }
+
   return (
-    <>
-      <Card sx={styles.card}>
-        <CardHeader
-          title="Gestión de Estudiantes"
-          titleTypographyProps={{ variant: "h5" }}
-          sx={styles.header}
-          action={
-            <Box>
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={handleCreateClick}
-                sx={styles.addButton}
-              >
-                Agregar Estudiante
-              </Button>
-              <IconButton onClick={handleRefresh} sx={styles.refreshButton}>
-                <Refresh style={{ color: "#fff" }} />
-              </IconButton>
-            </Box>
-          }
-        />
-        <CardContent>
-          <TableContainer component={Paper} sx={{ mt: 2 }}>
-            <Table sx={{ minWidth: 650 }} aria-label="students table">
-              <TableHead>
-                <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
-                  <TableCell sx={{ fontWeight: 600, color: "#1a1a1a" }}>
-                    Usuario
+    <StyledCard>
+      <CardHeader
+        title="Gestión de Estudiantes"
+        sx={styles.header}
+        action={
+          <Box>
+            <StyledButton
+              variant="contained"
+              startIcon={<Add />}
+              onClick={handleCreateClick}
+              sx={styles.addButton}
+            >
+              Agregar Estudiante
+            </StyledButton>
+            <IconButton
+              onClick={fetchStudents}
+              sx={styles.refreshButton}
+            >
+              <Refresh />
+            </IconButton>
+          </Box>
+        }
+      />
+      <CardContent>
+        <TableContainer component={Paper} elevation={0}>
+          <Table>
+            <TableHead sx={styles.tableHeader}>
+              <TableRow>
+                <TableCell sx={styles.tableHeaderCell}>Usuario</TableCell>
+                <TableCell sx={styles.tableHeaderCell}>Nombre Completo</TableCell>
+                <TableCell sx={styles.tableHeaderCell}>Correo</TableCell>
+                <TableCell sx={styles.tableHeaderCell}>Rol</TableCell>
+                <TableCell sx={styles.tableHeaderCell}>Fecha de Creación</TableCell>
+                <TableCell sx={styles.tableHeaderCell} align="center">Acciones</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {students.map((student) => (
+                <TableRow key={student.id}>
+                  <TableCell>{student.username}</TableCell>
+                  <TableCell>{student.nombre_completo}</TableCell>
+                  <TableCell>{student.email}</TableCell>
+                  <TableCell>{student.rol}</TableCell>
+                  <TableCell>
+                    {new Date(student.fecha_creacion).toLocaleDateString()}
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: "#1a1a1a" }}>
-                    Nombre Completo
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: "#1a1a1a" }}>
-                    Correo
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: "#1a1a1a" }}>
-                    Rol
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: "#1a1a1a" }}>
-                    Fecha de Creación
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: "#1a1a1a" }}>
-                    Acciones
+                  <TableCell align="center">
+                    <IconButton
+                      onClick={() => handleEditClick(student)}
+                      sx={styles.actionButton}
+                    >
+                      <EditIcon sx={styles.editIcon} />
+                    </IconButton>
+                    <IconButton
+                      onClick={() => handleDelete(student.id)}
+                      sx={styles.actionButton}
+                    >
+                      <DeleteIcon sx={styles.deleteIcon} />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
-              </TableHead>
-
-              <TableBody>
-                {students.map((student) => (
-                  <TableRow key={student.id} sx={tableStyles.tableRow}>
-                    <TableCell>{student.username}</TableCell>
-                    <TableCell>{student.nombre_completo}</TableCell>
-                    <TableCell>{student.email}</TableCell>
-                    <TableCell>{student.rol}</TableCell>
-                    <TableCell>
-                      {new Date(student.fecha_creacion).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <IconButton
-                        size="small"
-                        sx={{ color: "#1976d2" }}
-                        onClick={() => handleEditClick(student.id)}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        sx={{ color: "#d32f2f" }}
-                        onClick={() => handleDelete(student.id)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
-      </Card>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </CardContent>
 
       <ModalCreateStudent
         open={openModal}
@@ -360,7 +427,7 @@ const CrudStudents = () => {
         onUpdate={handleUpdateStudent}
         student={selectedStudent}
       />
-    </>
+    </StyledCard>
   );
 };
 

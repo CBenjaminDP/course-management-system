@@ -13,6 +13,15 @@ import { tableStyles } from '../../../styles/tableStyles';
 import ModalCreateTopic from './ModalCreateTopic';
 import ModalUpdateTopic from './ModalUpdateTopic';
 
+// Updated theme colors to match gold theme
+const theme = {
+  primary: "#FFD700", // Gold
+  secondary: "#4A4A4A",
+  text: "#333333",
+  hover: "#E6C200",
+  background: "#f8f9fa",
+};
+
 const styles = {
   card: {
     margin: '24px',
@@ -20,8 +29,8 @@ const styles = {
     borderRadius: '12px'
   },
   header: {
-    backgroundColor: '#1976d2',
-    color: '#fff',
+    backgroundColor: theme.primary,
+    color: theme.secondary,
     borderRadius: '12px 12px 0 0'
   },
   addButton: {
@@ -35,10 +44,11 @@ const styles = {
   },
   refreshButton: {
     margin: '0 8px',
-    backgroundColor: '#1976d2',
+    backgroundColor: theme.primary,
+    color: theme.secondary,
     borderRadius: '20px',
     '&:hover': {
-      backgroundColor: '#1565c0'
+      backgroundColor: theme.hover
     }
   }
 };
@@ -66,11 +76,23 @@ const CrudTopics = ({ unitId }) => {
     } catch (error) {
       console.error('Error fetching topics:', error);
       if (error.response?.status === 401) {
-        Swal.fire('Error', 'Sesión expirada. Por favor inicie sesión nuevamente.', 'error');
+        Swal.fire({
+          title: 'Error',
+          text: 'Sesión expirada. Por favor inicie sesión nuevamente.',
+          icon: 'error',
+          confirmButtonColor: theme.primary,
+          confirmButtonText: 'Aceptar'
+        });
         // Optionally redirect to login page:
         // router.push('/login');
       } else {
-        Swal.fire('Error', 'No se pudieron cargar los temas', 'error');
+        Swal.fire({
+          title: 'Error',
+          text: 'No se pudieron cargar los temas',
+          icon: 'error',
+          confirmButtonColor: theme.primary,
+          confirmButtonText: 'Aceptar'
+        });
       }
     } finally {
       setLoading(false);
@@ -122,7 +144,13 @@ const CrudTopics = ({ unitId }) => {
           }
         }
       );
-      Swal.fire('Éxito', 'Tema actualizado correctamente', 'success');
+      Swal.fire({
+        title: 'Éxito',
+        text: 'Tema actualizado correctamente',
+        icon: 'success',
+        confirmButtonColor: theme.primary,
+        confirmButtonText: 'Aceptar'
+      });
       fetchTopics();
       setOpenEditModal(false);
     } catch (error) {
@@ -152,7 +180,13 @@ const CrudTopics = ({ unitId }) => {
         }
       }
       
-      Swal.fire('Error', errorMessage, 'error');
+      Swal.fire({
+        title: 'Error',
+        text: errorMessage,
+        icon: 'error',
+        confirmButtonColor: theme.primary,
+        confirmButtonText: 'Aceptar'
+      });
     }
   };
   
@@ -162,7 +196,7 @@ const CrudTopics = ({ unitId }) => {
       text: "¡No podrás revertir esta acción!",
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
+      confirmButtonColor: theme.primary,
       cancelButtonColor: '#d33',
       confirmButtonText: 'Sí, eliminar',
       cancelButtonText: 'Cancelar'
@@ -174,10 +208,22 @@ const CrudTopics = ({ unitId }) => {
         await axios.delete(`http://localhost:8000/temas/eliminar/${topicId}/`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        Swal.fire('Eliminado!', 'El tema ha sido eliminado.', 'success');
+        Swal.fire({
+          title: 'Eliminado!',
+          text: 'El tema ha sido eliminado.',
+          icon: 'success',
+          confirmButtonColor: theme.primary,
+          confirmButtonText: 'Aceptar'
+        });
         fetchTopics();
       } catch (error) {
-        Swal.fire('Error', 'No se pudo eliminar el tema', 'error');
+        Swal.fire({
+          title: 'Error',
+          text: 'No se pudo eliminar el tema',
+          icon: 'error',
+          confirmButtonColor: theme.primary,
+          confirmButtonText: 'Aceptar'
+        });
       }
     }
   };
@@ -196,12 +242,24 @@ const CrudTopics = ({ unitId }) => {
           'Content-Type': 'application/json'
         }
       });
-      Swal.fire('Éxito', 'Tema creado correctamente', 'success');
+      Swal.fire({
+        title: 'Éxito',
+        text: 'Tema creado correctamente',
+        icon: 'success',
+        confirmButtonColor: theme.primary,
+        confirmButtonText: 'Aceptar'
+      });
       fetchTopics();
       setOpenCreateModal(false);
     } catch (error) {
       console.error('Error creating topic:', error);
-      Swal.fire('Error', error.response?.data?.message || 'No se pudo crear el tema', 'error');
+      Swal.fire({
+        title: 'Error',
+        text: error.response?.data?.message || 'No se pudo crear el tema',
+        icon: 'error',
+        confirmButtonColor: theme.primary,
+        confirmButtonText: 'Aceptar'
+      });
     }
   };
 
@@ -211,7 +269,7 @@ const CrudTopics = ({ unitId }) => {
     <Card sx={styles.card}>
       <CardHeader
         title="Temas de la Unidad"
-        titleTypographyProps={{ variant: 'h5' }}
+        titleTypographyProps={{ variant: 'h5', fontWeight: 600 }}
         sx={styles.header}
         action={
           <Box>
@@ -219,15 +277,25 @@ const CrudTopics = ({ unitId }) => {
               variant="contained"
               startIcon={<Add />}
               onClick={() => setOpenCreateModal(true)}
-              sx={styles.addButton}
+              sx={{
+                ...styles.addButton,
+                backgroundColor: theme.primary,
+                color: theme.secondary,
+                '&:hover': {
+                  backgroundColor: theme.hover
+                }
+              }}
             >
               Nuevo Tema
             </Button>
             <IconButton
               onClick={fetchTopics}
-              sx={styles.refreshButton}
+              sx={{
+                ...styles.refreshButton,
+                color: theme.secondary
+              }}
             >
-              <Refresh style={{ color: '#fff' }} />
+              <Refresh />
             </IconButton>
           </Box>
         }

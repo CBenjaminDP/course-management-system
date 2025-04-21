@@ -1,12 +1,15 @@
-import AuthorizationProvider  from "../context/AuthorizationProvider";
-import AuthGuard from "../context/AuthGuard"; // ✅ Importa el AuthGuard corregido
+import AuthorizationProvider from "../context/AuthorizationProvider";
+import AuthGuard from "../context/AuthGuard";
+import { AlertProvider } from "../context/AlertContext";
 
 function MyApp({ Component, pageProps }) {
   return (
     <AuthorizationProvider>
-      <AuthGuard>
-        <Component {...pageProps} />
-      </AuthGuard>
+      <AlertProvider>
+        <AuthGuard>
+          <Component {...pageProps} />
+        </AuthGuard>
+      </AlertProvider>
     </AuthorizationProvider>
   );
 }

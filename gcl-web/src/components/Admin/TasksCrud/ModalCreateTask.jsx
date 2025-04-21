@@ -1,176 +1,208 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, Button, Box, CircularProgress, MenuItem, Select, FormControl, InputLabel
+  Modal, Typography, TextField, Button, Box,
+  FormControl, InputLabel, Select, MenuItem
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import axios from 'axios';
 import Cookies from 'js-cookie';
-import { 
-  Modal, 
-  Typography 
-} from '@mui/material';
+
+// Theme colors to match the rest of the application
+const theme = {
+  primary: "#FFD700", // Gold
+  secondary: "#4A4A4A",
+  text: "#333333",
+  hover: "#E6C200",
+  background: "#f8f9fa",
+};
 
 const ModalCreateTask = ({ open, onClose, onSave, topicId }) => {
   const [newTask, setNewTask] = useState({
     titulo: '',
     descripcion: '',
-    fecha_entrega: null,
+    fecha_entrega: new Date(),
+    estado: 'pendiente',
     tema: topicId
   });
-  const [topics, setTopics] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchTopics = async () => {
-      try {
-        const token = Cookies.get('accessToken');
-        const response = await axios.get('http://localhost:8000/temas/', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setTopics(response.data);
-      } catch (error) {
-        console.error('Error fetching topics:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTopics();
-  }, []);
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setNewTask({ ...newTask, [name]: value });
+    setNewTask({
+      ...newTask,
+      [name]: value
+    });
+    
+    // Clear error when field is edited
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: null
+      });
+    }
   };
 
   const handleDateChange = (date) => {
-    setNewTask({ ...newTask, fecha_entrega: date });
+    setNewTask({
+      ...newTask,
+      fecha_entrega: date
+    });
+    
+    // Clear error when date is edited
+    if (errors.fecha_entrega) {
+      setErrors({
+        ...errors,
+        fecha_entrega: null
+      });
+    }
   };
 
-  const handleSubmit = () => {
-    // Format the date to YYYY-MM-DD only
-    const formattedDate = newTask.fecha_entrega ? 
-      new Date(newTask.fecha_entrega).toISOString().split('T')[0] : 
-      null;
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const newErrors = {};
+    if (!newTask.titulo) newErrors.titulo = 'El título es requerido';
+    if (!newTask.descripcion) newErrors.descripcion = 'La descripción es requerida';
 
-    const taskToSubmit = {
-      titulo: newTask.titulo.trim(),
-      descripcion: newTask.descripcion.trim(),
-      fecha_entrega: formattedDate, // Now in YYYY-MM-DD format
-      tema: newTask.tema
-    };
-
-    // Validate required fields
-    if (!taskToSubmit.titulo || !taskToSubmit.tema) {
-      Swal.fire('Error', 'Título y Tema son campos requeridos', 'error');
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
-    onSave(taskToSubmit);
+    // Format date correctly for submission
+    const formattedDate = newTask.fecha_entrega ? 
+      `${newTask.fecha_entrega.getFullYear()}-${(newTask.fecha_entrega.getMonth() + 1).toString().padStart(2, '0')}-${newTask.fecha_entrega.getDate().toString().padStart(2, '0')}` : 
+      null;
+
+    onSave({
+      titulo: newTask.titulo.trim(),
+      descripcion: newTask.descripcion.trim(),
+      fecha_entrega: formattedDate,
+      estado: newTask.estado,
+      tema: topicId
+    });
+  };
+  
+  const handleClose = () => {
+    setNewTask({
+      titulo: '',
+      descripcion: '',
+      fecha_entrega: new Date(),
+      estado: 'pendiente',
+      tema: topicId
+    });
+    setErrors({});
+    onClose();
   };
 
-  if (loading) return <CircularProgress />;
-
   return (
-    <Modal open={open} onClose={onClose} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <Box sx={{ 
-        backgroundColor: 'white', 
-        borderRadius: '12px', 
-        width: '500px', 
-        boxShadow: 24, 
-        p: 3 
-      }}>
-        {/* Header with blue background */}
-        <Box sx={{ 
-          backgroundColor: '#1976d2', 
-          color: '#fff', 
-          borderRadius: '12px 12px 0 0', 
-          p: 2, 
-          mb: 2 
-        }}>
-          <Typography variant="h6">Crear Nueva Tarea</Typography>
-        </Box>
-
-        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+    <Modal
+      open={open}
+      onClose={handleClose}
+      aria-labelledby="modal-create-task"
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Box
+        sx={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
+          p: 4,
+          width: '500px',
+          maxWidth: '90%',
+        }}
+      >
+        <Typography id="modal-create-task" variant="h6" component="h2" gutterBottom>
+          Crear Nueva Tarea
+        </Typography>
+        
+        <Box component="form" onSubmit={handleSubmit} noValidate>
           <TextField
             fullWidth
-            margin="normal"
             label="Título"
             name="titulo"
             value={newTask.titulo}
             onChange={handleChange}
-            sx={{ mb: 2 }}
+            error={!!errors.titulo}
+            helperText={errors.titulo}
+            margin="normal"
+            required
           />
-
+          
           <TextField
             fullWidth
-            margin="normal"
             label="Descripción"
             name="descripcion"
             value={newTask.descripcion}
             onChange={handleChange}
+            error={!!errors.descripcion}
+            helperText={errors.descripcion}
+            margin="normal"
             multiline
             rows={4}
-            sx={{ mb: 2 }}
+            required
           />
-
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Tema</InputLabel>
-            <Select
-              name="tema"
-              value={newTask.tema}
-              label="Tema"
-              onChange={handleChange}
-            >
-              {topics.map(topic => (
-                <MenuItem key={topic.id} value={topic.id}>
-                  {topic.nombre}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
+          
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <DatePicker
               label="Fecha de Entrega"
               value={newTask.fecha_entrega}
               onChange={handleDateChange}
               renderInput={(params) => (
-                <TextField 
-                  {...params} 
-                  fullWidth 
+                <TextField
+                  {...params}
+                  fullWidth
                   margin="normal"
-                  sx={{ mb: 2 }}
+                  error={!!errors.fecha_entrega}
+                  helperText={errors.fecha_entrega}
+                  required
                 />
               )}
             />
           </LocalizationProvider>
-
-          <Box sx={{ 
-            mt: 3, 
-            display: 'flex', 
-            justifyContent: 'flex-end', 
-            gap: 2 
-          }}>
-            <Button 
-              variant="outlined" 
-              onClick={onClose}
-              sx={{ borderRadius: '20px' }}
+          
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="estado-label">Estado</InputLabel>
+            <Select
+              labelId="estado-label"
+              name="estado"
+              value={newTask.estado}
+              onChange={handleChange}
+              label="Estado"
+            >
+              <MenuItem value="pendiente">Pendiente</MenuItem>
+              <MenuItem value="en_progreso">En Progreso</MenuItem>
+              <MenuItem value="completada">Completada</MenuItem>
+            </Select>
+          </FormControl>
+          
+          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+            <Button
+              onClick={handleClose}
+              sx={{ mr: 1 }}
             >
               Cancelar
             </Button>
-            <Button 
-              type="submit" 
-              variant="contained" 
-              sx={{ borderRadius: '20px' }}
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{
+                backgroundColor: theme.primary,
+                color: theme.text,
+                '&:hover': {
+                  backgroundColor: theme.hover,
+                },
+              }}
             >
-              Crear
+              Guardar
             </Button>
           </Box>
-        </form>
+        </Box>
       </Box>
     </Modal>
   );

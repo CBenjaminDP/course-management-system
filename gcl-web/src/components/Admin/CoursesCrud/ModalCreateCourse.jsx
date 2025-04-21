@@ -16,7 +16,44 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 import Cookies from 'js-cookie';
-import Swal from 'sweetalert2';
+import { useAlert } from '../../../context/AlertContext'; // Import the alert context
+import { styled } from '@mui/material/styles';
+
+// Define theme colors to match login
+const theme = {
+  primary: "#FFD700", // Gold
+  secondary: "#4A4A4A",
+  text: "#333333",
+  hover: "#E6C200",
+  background: "#f8f9fa"
+};
+
+// Styled components for form elements
+const StyledTextField = styled(TextField)(() => ({
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "8px",
+    transition: "all 0.3s",
+    "&:hover .MuiOutlinedInput-notchedOutline": {
+      borderColor: theme.primary,
+    },
+    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+      borderColor: theme.primary,
+      borderWidth: "1px",
+    },
+  },
+  "& .MuiFormLabel-root.Mui-focused": {
+    color: theme.secondary,
+  },
+}));
+
+const StyledButton = styled(Button)(() => ({
+  borderRadius: "8px",
+  padding: "10px 20px",
+  textTransform: "none",
+  fontWeight: "600",
+  boxShadow: "none",
+  transition: "all 0.3s",
+}));
 
 const ModalCreateCourse = ({ open, onClose, onCreate }) => {
   const [formData, setFormData] = useState({
@@ -31,6 +68,7 @@ const ModalCreateCourse = ({ open, onClose, onCreate }) => {
   const [teachers, setTeachers] = useState([]);
   const [loadingTeachers, setLoadingTeachers] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { showAlert } = useAlert(); // Use the alert context
 
   useEffect(() => {
     const fetchTeachers = async () => {
@@ -85,7 +123,7 @@ const ModalCreateCourse = ({ open, onClose, onCreate }) => {
     setIsFormValid(isValid);
   }, [formData]);
   
-  // Update the handleSubmit function
+  // Update the handleSubmit function to use alert context
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -113,18 +151,20 @@ const ModalCreateCourse = ({ open, onClose, onCreate }) => {
         imagen_url: ''
       });
   
-      // Then show success message
-      await Swal.fire({
-        title: 'Éxito',
-        text: 'Curso creado correctamente',
-        icon: 'success'
+      // Then show success message using alert context
+      showAlert({
+        message: 'Curso creado correctamente',
+        severity: 'success'
       });
       
       // Finally refresh the data
       onCreate();
     } catch (error) {
       console.error('Error creating course:', error);
-      await Swal.fire('Error', 'No se pudo crear el curso', 'error');
+      showAlert({
+        message: 'No se pudo crear el curso',
+        severity: 'error'
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -140,8 +180,8 @@ const ModalCreateCourse = ({ open, onClose, onCreate }) => {
         p: 3 
       }}>
         <Box sx={{ 
-          backgroundColor: '#1976d2', 
-          color: '#fff', 
+          backgroundColor: theme.primary, 
+          color: theme.text, 
           borderRadius: '12px 12px 0 0', 
           p: 2, 
           mb: 2 
@@ -151,7 +191,7 @@ const ModalCreateCourse = ({ open, onClose, onCreate }) => {
         
         <form onSubmit={handleSubmit}>
           <Stack spacing={3}>
-            <TextField
+            <StyledTextField
               label="Nombre del Curso"
               name="nombre"
               value={formData.nombre}
@@ -160,7 +200,7 @@ const ModalCreateCourse = ({ open, onClose, onCreate }) => {
               required
             />
             
-            <TextField
+            <StyledTextField
               label="Descripción"
               name="descripcion"
               value={formData.descripcion}
@@ -179,6 +219,18 @@ const ModalCreateCourse = ({ open, onClose, onCreate }) => {
                 label="Profesor"
                 disabled={loadingTeachers}
                 required
+                sx={{
+                  borderRadius: "8px",
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "rgba(0, 0, 0, 0.23)",
+                  },
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: theme.primary,
+                  },
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: theme.primary,
+                  }
+                }}
               >
                 {teachers.map(teacher => (
                   <MenuItem key={teacher.id} value={teacher.id}>
@@ -247,21 +299,40 @@ const ModalCreateCourse = ({ open, onClose, onCreate }) => {
             />
 
             <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-              <Button 
+              <StyledButton 
                 variant="outlined" 
                 onClick={onClose}
-                sx={{ borderRadius: '20px' }}
+                sx={{ 
+                  borderRadius: '20px',
+                  borderColor: theme.secondary,
+                  color: theme.secondary,
+                  '&:hover': {
+                    borderColor: theme.secondary,
+                    backgroundColor: 'rgba(74, 74, 74, 0.04)'
+                  }
+                }}
               >
                 Cancelar
-              </Button>
-              <Button 
+              </StyledButton>
+              <StyledButton 
                 type="submit" 
                 variant="contained" 
-                sx={{ borderRadius: '20px' }}
+                sx={{ 
+                  borderRadius: '20px',
+                  backgroundColor: theme.primary,
+                  color: theme.text,
+                  '&:hover': {
+                    backgroundColor: theme.hover
+                  },
+                  '&.Mui-disabled': {
+                    backgroundColor: 'rgba(255, 215, 0, 0.5)',
+                    color: 'rgba(51, 51, 51, 0.7)'
+                  }
+                }}
                 disabled={!isFormValid || isSubmitting}
               >
                 {isSubmitting ? 'Creando...' : 'Crear Curso'}
-              </Button>
+              </StyledButton>
             </Box>
           </Stack>
         </form>

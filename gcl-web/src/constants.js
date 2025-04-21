@@ -23,10 +23,6 @@ export const MENU_OPTIONS = {
         { label: "Tareas", url: "/admin/manage/courses/tasks" },
       ],
     },
-    {
-      label: "Perfil",
-      url: "/admin/manage/profile",
-    },
   ],
   teacher: [
     {

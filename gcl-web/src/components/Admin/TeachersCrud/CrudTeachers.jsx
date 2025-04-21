@@ -12,6 +12,9 @@ import {
   CircularProgress,
   Typography,
   Paper,
+  Card,
+  CardHeader,
+  CardContent,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -20,43 +23,106 @@ import ModalUpdateTeacher from "./ModalUpdateTeacher";
 import Cookies from "js-cookie";
 import axios from "axios";
 import { tableStyles } from "../../../styles/tableStyles";
-import Swal from "sweetalert2";
-import { Card, CardHeader, CardContent } from "@mui/material";
-import { Add } from "@mui/icons-material";
-import { Refresh } from "@mui/icons-material";
+// Import useAlert hook instead of Swal
+import { useAlert } from "../../../context/AlertContext";
+import { Add, Refresh } from "@mui/icons-material";
+import { styled } from "@mui/material/styles";
+
+// Define theme colors to match login
+const theme = {
+  primary: "#FFD700", // Gold
+  secondary: "#4A4A4A",
+  text: "#333333",
+  hover: "#E6C200",
+  background: "#f8f9fa",
+};
+
+// Styled components
+const StyledCard = styled(Card)(({ theme }) => ({
+  margin: "24px",
+  boxShadow: "0 8px 24px rgba(0, 0, 0, 0.06)",
+  borderRadius: "16px",
+  overflow: "hidden",
+  backgroundColor: "#fff",
+  transition: "transform 0.3s, box-shadow 0.3s",
+  "&:hover": {
+    boxShadow: "0 12px 32px rgba(0, 0, 0, 0.09)",
+    transform: "translateY(-2px)",
+  },
+}));
+
+const StyledButton = styled(Button)(({ theme }) => ({
+  borderRadius: "8px",
+  padding: "8px 16px",
+  textTransform: "none",
+  fontWeight: "600",
+  boxShadow: "none",
+  transition: "all 0.3s",
+}));
 
 // Update styles
 const styles = {
-  card: {
-    margin: "24px",
-    boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
-    borderRadius: "12px",
-  },
   header: {
-    backgroundColor: "#1976d2",
-    color: "#fff",
-    borderRadius: "12px 12px 0 0",
+    backgroundColor: "#FFD700",
+    color: "#333333",
+    padding: "16px 24px",
+    borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
   },
   addButton: {
-    margin: "16px",
-    backgroundColor: "#4caf50", // Changed to green
-    borderRadius: "20px",
-    padding: "8px 24px",
+    backgroundColor: "#FFD700",
+    color: "#333333",
     "&:hover": {
-      backgroundColor: "#388e3c", // Darker green on hover
+      backgroundColor: "#E6C200",
+      boxShadow: "0 4px 12px rgba(255, 215, 0, 0.3)",
     },
   },
   refreshButton: {
-    margin: "0 8px",
-    backgroundColor: "#1976d2", // Changed to blue
-    borderRadius: "20px",
+    backgroundColor: "#f5f5f5",
+    color: "#4A4A4A",
+    marginLeft: "8px",
     "&:hover": {
-      backgroundColor: "#1565c0",
+      backgroundColor: "#e0e0e0",
+      transform: "rotate(180deg)",
+      transition: "transform 0.5s",
+    },
+  },
+  tableHeader: {
+    backgroundColor: "#f8f9fa",
+  },
+  tableHeaderCell: {
+    fontWeight: 600,
+    color: "#4A4A4A",
+    padding: "16px",
+  },
+  tableRow: {
+    "&:nth-of-type(odd)": {
+      backgroundColor: "#fafafa",
+    },
+    "&:hover": {
+      backgroundColor: "#f5f5f5",
+    },
+    transition: "background-color 0.2s",
+  },
+  tableCell: {
+    padding: "16px",
+  },
+  editButton: {
+    color: "#FFD700",
+    "&:hover": {
+      backgroundColor: "rgba(255, 215, 0, 0.1)",
+    },
+  },
+  deleteButton: {
+    color: "#ff5252",
+    "&:hover": {
+      backgroundColor: "rgba(255, 82, 82, 0.1)",
     },
   },
 };
 
 const CrudTeachers = () => {
+  // Add the useAlert hook
+  const { showAlert, showConfirmation } = useAlert();
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -67,6 +133,14 @@ const CrudTeachers = () => {
   const fetchTeachers = async () => {
     try {
       const token = Cookies.get("accessToken");
+      
+      // Check if token exists
+      if (!token) {
+        setError("No se encontró el token de autenticación. Por favor, inicie sesión nuevamente.");
+        setLoading(false);
+        return;
+      }
+      
       const response = await axios.get("http://localhost:8000/usuarios/", {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -79,7 +153,14 @@ const CrudTeachers = () => {
       setTeachers(teachersData);
       setError(null);
     } catch (err) {
-      setError(err.message);
+      // Handle 401 Unauthorized specifically
+      if (err.response && err.response.status === 401) {
+        setError("Sesión expirada o no autorizada. Por favor, inicie sesión nuevamente.");
+        // Optionally redirect to login page
+        // window.location.href = '/login';
+      } else {
+        setError(err.message || "Error al cargar los profesores");
+      }
     } finally {
       setLoading(false);
     }
@@ -123,18 +204,39 @@ const CrudTeachers = () => {
         );
         setTeachers(teachersData);
         setOpenModal(false);
-        Swal.fire("Éxito", "Profesor creado correctamente", "success");
+        
+        // Simplified success message without sensitive information
+        let successMessage = "Profesor creado correctamente";
+        
+        // Check if email was sent successfully
+        if (response.data.email_enviado) {
+          successMessage += ". Se ha enviado un correo con las credenciales al usuario.";
+        } else if (response.data.email_error) {
+          successMessage += ". Hubo un problema al enviar el correo de credenciales.";
+        }
+        
+        // Use showAlert with simplified message
+        showAlert({
+          message: successMessage,
+          severity: "success",
+          duration: 4000,
+        });
+        
         return true;
       }
       return false;
     } catch (err) {
-      Swal.fire("Error", "No se pudo crear el profesor", "error");
+      // Simplified error message
+      showAlert({
+        message: err.response?.data?.error || "No se pudo crear el profesor",
+        severity: "error",
+        duration: 6000,
+      });
       console.error(err);
       return false;
     }
   };
 
-  // Add this new function to handle modal closing
   const handleCloseModal = () => {
     setOpenModal(false);
   };
@@ -142,7 +244,7 @@ const CrudTeachers = () => {
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <CircularProgress />
+        <CircularProgress sx={{ color: theme.primary }} />
       </Box>
     );
   }
@@ -160,14 +262,14 @@ const CrudTeachers = () => {
         }}
       >
         <Typography color="error">Error: {error}</Typography>
-        <Button
+        <StyledButton
           variant="contained"
           onClick={handleRefresh}
-          sx={styles.refreshButton}
+          sx={styles.addButton}
         >
           <Refresh style={{ marginRight: "8px" }} />
           Recargar datos
-        </Button>
+        </StyledButton>
       </Box>
     );
   }
@@ -175,66 +277,78 @@ const CrudTeachers = () => {
   const handleDelete = async (id) => {
     try {
       if (!id || typeof id !== "string") {
-        Swal.fire("Error", "ID de profesor no válido", "error");
+        showAlert({
+          message: "ID de profesor no válido",
+          severity: "error",
+        });
         return;
       }
 
       const token = Cookies.get("accessToken");
-      const result = await Swal.fire({
+      
+      // Use the new confirmation dialog instead of Swal
+      showConfirmation({
         title: "¿Estás seguro?",
-        text: "¡No podrás revertir esto!",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#3085d6",
-        cancelButtonColor: "#d33",
-        confirmButtonText: "Sí, eliminar!",
+        message: "¡No podrás revertir esto!",
+        onConfirm: async () => {
+          try {
+            console.log("Deleting teacher with ID:", id);
+            console.log("Using token:", token);
+
+            const response = await axios.delete(
+              `http://localhost:8000/usuarios/eliminar/${id}/`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+                validateStatus: function (status) {
+                  return true; // Resolve all status codes
+                },
+              }
+            );
+
+            if (response.status === 200) {
+              setTeachers((prev) => prev.filter((teacher) => teacher.id !== id));
+              showAlert({
+                message: "El profesor ha sido eliminado",
+                severity: "success",
+              });
+            } else {
+              let errorMessage = `Error del servidor (${response.status})`;
+              if (response.data && response.data.message) {
+                errorMessage = response.data.message;
+              }
+              throw new Error(errorMessage);
+            }
+          } catch (err) {
+            let errorMessage = "No se pudo eliminar el profesor. Error del servidor.";
+
+            if (err.response) {
+              if (err.response.status === 404) {
+                errorMessage = "El profesor no fue encontrado.";
+              } else if (err.response.status === 500) {
+                errorMessage =
+                  "Error interno del servidor. Por favor, inténtelo de nuevo más tarde.";
+              }
+            }
+
+            showAlert({
+              message: errorMessage,
+              severity: "error",
+              duration: 6000,
+            });
+            console.error("Error al eliminar:", err);
+            console.error("Error details:", err.response?.data);
+          }
+        },
       });
-
-      if (result.isConfirmed) {
-        // Add debug logging
-        console.log("Deleting teacher with ID:", id);
-        console.log("Using token:", token);
-
-        const response = await axios.delete(
-          `http://localhost:8000/usuarios/eliminar/${id}/`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            validateStatus: function (status) {
-              return true; // Resolve all status codes
-            },
-          }
-        );
-
-        if (response.status === 200) {
-          setTeachers((prev) => prev.filter((teacher) => teacher.id !== id));
-          Swal.fire("¡Eliminado!", "El profesor ha sido eliminado.", "success");
-        } else {
-          // Handle specific error codes
-          let errorMessage = `Error del servidor (${response.status})`;
-          if (response.data && response.data.message) {
-            errorMessage = response.data.message;
-          }
-          throw new Error(errorMessage);
-        }
-      }
     } catch (err) {
-      let errorMessage = "No se pudo eliminar el profesor. Error del servidor.";
-
-      if (err.response) {
-        if (err.response.status === 404) {
-          errorMessage = "El profesor no fue encontrado.";
-        } else if (err.response.status === 500) {
-          errorMessage =
-            "Error interno del servidor. Por favor, inténtelo de nuevo más tarde.";
-        }
-      }
-
-      Swal.fire("Error", errorMessage, "error");
-      console.error("Error al eliminar:", err);
-      console.error("Error details:", err.response?.data);
+      showAlert({
+        message: "Error al procesar la solicitud",
+        severity: "error",
+      });
+      console.error(err);
     }
   };
 
@@ -278,96 +392,128 @@ const CrudTeachers = () => {
         );
         setTeachers(teachersData);
 
-        Swal.fire("Success", "Teacher updated successfully", "success");
+        // Use showAlert instead of Swal
+        showAlert({
+          message: "Profesor actualizado correctamente",
+          severity: "success",
+        });
       }
     } catch (err) {
-      Swal.fire("Error", "Failed to update teacher", "error");
+      // Use showAlert for error
+      showAlert({
+        message: "No se pudo actualizar el profesor",
+        severity: "error",
+      });
       console.error(err);
     }
   };
 
+  // Update the return statement to include empty state handling
   return (
     <>
-      <Card sx={styles.card}>
+      <StyledCard>
         <CardHeader
-          title="Gestión de Profesores"
-          titleTypographyProps={{ variant: "h5" }}
+          title={
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 600, color: theme.text }}
+            >
+              Gestión de Profesores
+            </Typography>
+          }
           sx={styles.header}
           action={
             <Box>
-              <Button
+              <StyledButton
                 variant="contained"
                 startIcon={<Add />}
-                onClick={handleCreateClick} // Changed to use handler
+                onClick={handleCreateClick}
                 sx={styles.addButton}
               >
                 Agregar Profesor
-              </Button>
+              </StyledButton>
               <IconButton onClick={handleRefresh} sx={styles.refreshButton}>
-                <Refresh style={{ color: "#fff" }} />
+                <Refresh />
               </IconButton>
             </Box>
           }
         />
-        <CardContent>
-          <TableContainer component={Paper} sx={{ mt: 2 }}>
+        <CardContent sx={{ p: 0 }}>
+          <TableContainer
+            component={Paper}
+            sx={{ boxShadow: "none", borderRadius: 0 }}
+          >
             <Table sx={{ minWidth: 650 }} aria-label="teachers table">
               <TableHead>
-                <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
-                  <TableCell sx={{ fontWeight: 600, color: "#1a1a1a" }}>
-                    Usuario
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: "#1a1a1a" }}>
+                <TableRow sx={styles.tableHeader}>
+                  <TableCell sx={styles.tableHeaderCell}>Usuario</TableCell>
+                  <TableCell sx={styles.tableHeaderCell}>
                     Nombre Completo
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: "#1a1a1a" }}>
-                    Correo
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: "#1a1a1a" }}>
-                    Rol
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: "#1a1a1a" }}>
+                  <TableCell sx={styles.tableHeaderCell}>Correo</TableCell>
+                  <TableCell sx={styles.tableHeaderCell}>Rol</TableCell>
+                  <TableCell sx={styles.tableHeaderCell}>
                     Fecha de Creación
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: "#1a1a1a" }}>
-                    Acciones
-                  </TableCell>
+                  <TableCell sx={styles.tableHeaderCell}>Acciones</TableCell>
                 </TableRow>
               </TableHead>
 
               <TableBody>
-                {teachers.map((teacher) => (
-                  <TableRow key={teacher.id} sx={tableStyles.tableRow}>
-                    <TableCell>{teacher.username}</TableCell>
-                    <TableCell>{teacher.nombre_completo}</TableCell>
-                    <TableCell>{teacher.email}</TableCell>
-                    <TableCell>{teacher.rol}</TableCell>
-                    <TableCell>
-                      {new Date(teacher.fecha_creacion).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <IconButton
-                        size="small"
-                        sx={{ ...styles.actionButton, color: "#1976d2" }}
-                        onClick={() => handleEditClick(teacher.id)} // Changed to use handler
+                {teachers.length > 0 ? (
+                  teachers.map((teacher) => (
+                    <TableRow key={teacher.id} sx={styles.tableRow}>
+                      <TableCell sx={styles.tableCell}>
+                        {teacher.username}
+                      </TableCell>
+                      <TableCell sx={styles.tableCell}>
+                        {teacher.nombre_completo}
+                      </TableCell>
+                      <TableCell sx={styles.tableCell}>
+                        {teacher.email}
+                      </TableCell>
+                      <TableCell sx={styles.tableCell}>{teacher.rol}</TableCell>
+                      <TableCell sx={styles.tableCell}>
+                        {new Date(teacher.fecha_creacion).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell sx={styles.tableCell}>
+                        <IconButton
+                          size="small"
+                          sx={styles.editButton}
+                          onClick={() => handleEditClick(teacher.id)}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          sx={styles.deleteButton}
+                          onClick={() => handleDelete(teacher.id)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} sx={styles.emptyState}>
+                      <Typography variant="body1">
+                        No hay profesores registrados
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{ mt: 1, color: "#9e9e9e" }}
                       >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        sx={{ ...styles.actionButton, color: "#d32f2f" }}
-                        onClick={() => handleDelete(teacher.id)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
+                        Haz clic en "Agregar Profesor" para crear uno nuevo
+                      </Typography>
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </TableContainer>
         </CardContent>
-      </Card>
+      </StyledCard>
 
       {/* Modal for creating teacher */}
       <ModalCreateTeacher

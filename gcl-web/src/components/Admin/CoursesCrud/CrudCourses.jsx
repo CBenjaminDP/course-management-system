@@ -41,10 +41,18 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 import Cookies from 'js-cookie';
-// Add this import at the top with other imports
-import Swal from 'sweetalert2';
+import { useAlert } from '../../../context/AlertContext'; // Import the alert context
 import ModalCreateCourse from './ModalCreateCourse';
 import ModalUpdateCourse from './ModalUpdateCourse';
+
+// Define theme colors to match login
+const theme = {
+  primary: "#FFD700", // Gold
+  secondary: "#4A4A4A",
+  text: "#333333",
+  hover: "#E6C200",
+  background: "#f8f9fa",
+};
 
 const CrudCourses = () => {
   const [courses, setCourses] = useState([]);
@@ -54,7 +62,8 @@ const CrudCourses = () => {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedTab, setSelectedTab] = useState('grid');
   const [openDetail, setOpenDetail] = useState(false);
-  const theme = useTheme();
+  const muiTheme = useTheme(); // This is the Material UI theme with shadows
+  const { showAlert, showConfirmation } = useAlert(); // Use the alert context
 
   const fetchCourses = async () => {
     try {
@@ -121,37 +130,33 @@ const CrudCourses = () => {
   };
 
   const handleDeleteCourse = async (courseId) => {
-    const result = await Swal.fire({
+    // Replace SweetAlert2 with the alert context
+    showConfirmation({
       title: '¿Estás seguro?',
-      text: "¡No podrás revertir esto!",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
-    });
-  
-    if (result.isConfirmed) {
-      try {
-        const token = Cookies.get('accessToken');
-        await axios.delete(`http://localhost:8000/cursos/eliminar_curso/${courseId}/`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        
-        await Swal.fire(
-          'Eliminado!',
-          'El curso ha sido eliminado.',
-          'success'
-        );
-        
-        fetchCourses(); // Refresh the list
-      } catch (error) {
-        Swal.fire('Error', 'No se pudo eliminar el curso', 'error');
+      message: "¡No podrás revertir esto!",
+      onConfirm: async () => {
+        try {
+          const token = Cookies.get('accessToken');
+          await axios.delete(`http://localhost:8000/cursos/eliminar_curso/${courseId}/`, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          
+          showAlert({
+            message: 'El curso ha sido eliminado.',
+            severity: 'success'
+          });
+          
+          fetchCourses(); // Refresh the list
+        } catch (error) {
+          showAlert({
+            message: 'No se pudo eliminar el curso',
+            severity: 'error'
+          });
+        }
       }
-    }
+    });
   };
 
   if (loading) {
@@ -162,32 +167,70 @@ const CrudCourses = () => {
     );
   }
 
+  // Update styles to match gold theme
   const styles = {
     card: {
       margin: '24px',
       boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
-      borderRadius: '12px'
+      borderRadius: '16px'
     },
     header: {
-      backgroundColor: '#1976d2',
-      color: '#fff',
+      backgroundColor: theme.primary,
+      color: theme.text,
       borderRadius: '12px 12px 0 0'
     },
     addButton: {
       margin: '16px',
-      backgroundColor: '#4caf50',
+      backgroundColor: theme.primary,
+      color: theme.text,
       borderRadius: '20px',
       padding: '8px 24px',
       '&:hover': {
-        backgroundColor: '#388e3c'
+        backgroundColor: theme.hover,
+        boxShadow: '0 4px 12px rgba(255, 215, 0, 0.3)',
       }
     },
     refreshButton: {
       margin: '0 8px',
-      backgroundColor: '#1976d2',
+      backgroundColor: theme.secondary,
+      color: '#ffffff',
       borderRadius: '20px',
       '&:hover': {
-        backgroundColor: '#1565c0'
+        backgroundColor: '#333333',
+        transform: 'rotate(180deg)',
+        transition: 'transform 0.5s',
+      }
+    },
+    tableHeader: {
+      backgroundColor: theme.background,
+    },
+    tableHeaderCell: {
+      fontWeight: 600,
+      color: theme.secondary,
+      padding: '16px',
+    },
+    tableRow: {
+      "&:nth-of-type(odd)": {
+        backgroundColor: '#fafafa',
+      },
+      "&:hover": {
+        backgroundColor: '#f5f5f5',
+      },
+      transition: "background-color 0.2s",
+    },
+    tableCell: {
+      padding: '16px',
+    },
+    editButton: {
+      color: theme.primary,
+      '&:hover': {
+        backgroundColor: 'rgba(255, 215, 0, 0.1)',
+      }
+    },
+    deleteButton: {
+      color: '#ff5252',
+      '&:hover': {
+        backgroundColor: 'rgba(255, 82, 82, 0.1)',
       }
     }
   };
@@ -241,7 +284,7 @@ const CrudCourses = () => {
                       transition: 'transform 0.3s, box-shadow 0.3s',
                       '&:hover': {
                         transform: 'translateY(-5px)',
-                        boxShadow: theme.shadows[6]
+                        boxShadow: muiTheme.shadows[6] // Use muiTheme instead of theme
                       }
                     }}>
                       <Box sx={{ 
@@ -373,8 +416,8 @@ const CrudCourses = () => {
         {selectedCourse && (
           <>
             <DialogTitle sx={{ 
-              backgroundColor: theme.palette.primary.main, 
-              color: 'white',
+              backgroundColor: theme.primary, // Changed from theme.palette.primary.main
+              color: theme.text, // Changed from 'white'
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center'
@@ -390,7 +433,7 @@ const CrudCourses = () => {
             <DialogContent sx={{ py: 4 }}>
               <Box sx={{ 
                 height: 200,
-                backgroundColor: theme.palette.primary.main,
+                backgroundColor: theme.primary, // Changed from theme.palette.primary.main
                 backgroundImage: selectedCourse.imagen_url ? `url(${selectedCourse.imagen_url})` : 'none',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',

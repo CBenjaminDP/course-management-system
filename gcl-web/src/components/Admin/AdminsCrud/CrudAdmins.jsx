@@ -11,7 +11,10 @@ import {
   IconButton,
   CircularProgress,
   Typography,
-  Paper
+  Paper,
+  Card,
+  CardHeader,
+  CardContent,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -20,45 +23,105 @@ import ModalUpdateAdmin from "./ModalUpdateAdmin";
 import Cookies from 'js-cookie';
 import axios from 'axios';
 import { tableStyles } from '../../../styles/tableStyles';
-import Swal from 'sweetalert2';
-import { Card, CardHeader, CardContent } from '@mui/material';
 import { Add } from '@mui/icons-material';
 import { Refresh } from '@mui/icons-material';
-import {
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem
-} from "@mui/material";
+import { styled } from "@mui/material/styles";
+import { useAlert } from '../../../context/AlertContext'; // Import the alert context
 
-const styles = {
-  card: {
-    margin: '24px',
-    boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
-    borderRadius: '12px'
+// Define theme colors to match login
+const theme = {
+  primary: "#FFD700", // Gold
+  secondary: "#4A4A4A",
+  text: "#333333",
+  hover: "#E6C200",
+  background: "#f8f9fa",
+};
+
+// Styled components
+const StyledCard = styled(Card)(({ theme }) => ({
+  margin: "24px",
+  boxShadow: "0 8px 24px rgba(0, 0, 0, 0.06)",
+  borderRadius: "16px",
+  overflow: "hidden",
+  backgroundColor: "#fff",
+  transition: "transform 0.3s, box-shadow 0.3s",
+  "&:hover": {
+    boxShadow: "0 12px 32px rgba(0, 0, 0, 0.09)",
+    transform: "translateY(-2px)",
   },
+}));
+
+const StyledButton = styled(Button)(({ theme }) => ({
+  borderRadius: "8px",
+  padding: "8px 16px",
+  textTransform: "none",
+  fontWeight: "600",
+  boxShadow: "none",
+  transition: "all 0.3s",
+}));
+
+// Update styles
+const styles = {
   header: {
-    backgroundColor: '#1976d2',
-    color: '#fff',
-    borderRadius: '12px 12px 0 0'
+    backgroundColor: "#FFD700",
+    color: "#333333",
+    padding: "16px 24px",
+    borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
   },
   addButton: {
-    margin: '16px',
-    backgroundColor: '#4caf50',
-    borderRadius: '20px',
-    padding: '8px 24px',
-    '&:hover': {
-      backgroundColor: '#388e3c'
-    }
+    backgroundColor: "#FFD700",
+    color: "#333333",
+    "&:hover": {
+      backgroundColor: "#E6C200",
+      boxShadow: "0 4px 12px rgba(255, 215, 0, 0.3)",
+    },
   },
   refreshButton: {
-    margin: '0 8px',
-    backgroundColor: '#1976d2',
-    borderRadius: '20px',
-    '&:hover': {
-      backgroundColor: '#1565c0'
-    }
-  }
+    backgroundColor: "#f5f5f5",
+    color: "#4A4A4A",
+    marginLeft: "8px",
+    "&:hover": {
+      backgroundColor: "#e0e0e0",
+      transform: "rotate(180deg)",
+      transition: "transform 0.5s",
+    },
+  },
+  tableHeader: {
+    backgroundColor: "#f8f9fa",
+  },
+  tableHeaderCell: {
+    fontWeight: 600,
+    color: "#4A4A4A",
+    padding: "16px",
+  },
+  tableRow: {
+    "&:nth-of-type(odd)": {
+      backgroundColor: "#fafafa",
+    },
+    "&:hover": {
+      backgroundColor: "#f5f5f5",
+    },
+    transition: "background-color 0.2s",
+  },
+  tableCell: {
+    padding: "16px",
+  },
+  editButton: {
+    color: "#FFD700",
+    "&:hover": {
+      backgroundColor: "rgba(255, 215, 0, 0.1)",
+    },
+  },
+  deleteButton: {
+    color: "#ff5252",
+    "&:hover": {
+      backgroundColor: "rgba(255, 82, 82, 0.1)",
+    },
+  },
+  emptyState: {
+    textAlign: "center",
+    padding: "32px 16px",
+  },
 };
 
 const CrudAdmins = () => {
@@ -68,10 +131,45 @@ const CrudAdmins = () => {
   const [openModal, setOpenModal] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState(null);
   const [openUpdateModal, setOpenUpdateModal] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null); // Add state for current user ID
+  const { showAlert, showConfirmation } = useAlert();
+
+  // Get current user info when component mounts
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const token = Cookies.get('accessToken');
+        if (!token) return;
+        
+        // Change the endpoint to the correct one that exists in your API
+        const response = await axios.get('http://localhost:8000/usuarios/usuario-actual/', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        
+        if (response.data && response.data.id) {
+          setCurrentUserId(response.data.id);
+        }
+      } catch (err) {
+        console.error('Error fetching current user:', err);
+      }
+    };
+    
+    fetchCurrentUser();
+  }, []);
 
   const fetchAdmins = async () => {
     try {
       const token = Cookies.get('accessToken');
+      
+      // Check if token exists
+      if (!token) {
+        setError("No se encontró el token de autenticación. Por favor, inicie sesión nuevamente.");
+        setLoading(false);
+        return;
+      }
+      
       const response = await axios.get('http://localhost:8000/usuarios/', {
         headers: {
           Authorization: `Bearer ${token}`
@@ -82,12 +180,16 @@ const CrudAdmins = () => {
       setAdmins(adminsData);
       setError(null);
     } catch (err) {
-      setError(err.message);
+      // Handle 401 Unauthorized specifically
+      if (err.response && err.response.status === 401) {
+        setError("Sesión expirada o no autorizada. Por favor, inicie sesión nuevamente.");
+      } else {
+        setError(err.message || "Error al cargar los administradores");
+      }
     } finally {
       setLoading(false);
     }
   };
-
 
   useEffect(() => {
     fetchAdmins();
@@ -120,18 +222,42 @@ const CrudAdmins = () => {
         
         const adminsData = refreshResponse.data.filter(user => user.rol === 'admin');
         setAdmins(adminsData);
-        Swal.fire('Éxito', 'Administrador creado correctamente', 'success');
+        setOpenModal(false);
+        
+        // Use the alert context instead of SweetAlert2
+        let successMessage = "Administrador creado correctamente";
+        
+        if (response.data && response.data.email_enviado) {
+          successMessage += ". Se ha enviado un correo con las credenciales al usuario.";
+        } else if (response.data && response.data.email_error) {
+          successMessage += ". Hubo un problema al enviar el correo de credenciales.";
+        }
+        
+        showAlert({ 
+          message: successMessage, 
+          severity: "success" 
+        });
+        return true;
       }
+      return false;
     } catch (err) {
-      Swal.fire('Error', 'No se pudo crear el administrador', 'error');
+      showAlert({ 
+        message: err.response?.data?.error || 'No se pudo crear el administrador', 
+        severity: "error" 
+      });
       console.error(err);
+      return false;
     }
+  };
+
+  const handleCloseModal = () => {
+    setOpenModal(false);
   };
 
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-        <CircularProgress />
+        <CircularProgress sx={{ color: theme.primary }} />
       </Box>
     );
   }
@@ -140,14 +266,14 @@ const CrudAdmins = () => {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, flexDirection: 'column', alignItems: 'center', gap: 2 }}>
         <Typography color="error">Error: {error}</Typography>
-        <Button 
+        <StyledButton 
           variant="contained" 
           onClick={handleRefresh}
-          sx={styles.refreshButton}
+          sx={styles.addButton}
         >
           <Refresh style={{ marginRight: '8px' }} />
           Recargar datos
-        </Button>
+        </StyledButton>
       </Box>
     );
   }
@@ -155,57 +281,79 @@ const CrudAdmins = () => {
   const handleDelete = async (id) => {
     try {
       if (!id || typeof id !== 'string') {
-        Swal.fire('Error', 'ID de administrador no válido', 'error');
+        showAlert({ 
+          message: 'ID de administrador no válido', 
+          severity: "error" 
+        });
+        return;
+      }
+      
+      // Check if user is trying to delete their own account
+      if (id === currentUserId) {
+        showAlert({ 
+          message: 'No puedes eliminar tu propia cuenta de administrador', 
+          severity: "warning" 
+        });
         return;
       }
   
       const token = Cookies.get('accessToken');
-      const result = await Swal.fire({
-        title: '¿Estás seguro?',
-        text: "¡No podrás revertir esto!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Sí, eliminar!'
-      });
-  
-      if (result.isConfirmed) {
-        const response = await axios.delete(`http://localhost:8000/usuarios/eliminar/${id}/`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          validateStatus: function (status) {
-            return true;
-          }
-        });
-  
-        if (response.status === 200) {
-          setAdmins(prev => prev.filter(admin => admin.id !== id));
-          Swal.fire('¡Eliminado!', 'El administrador ha sido eliminado.', 'success');
-        } else {
-          let errorMessage = `Error del servidor (${response.status})`;
-          if (response.data && response.data.message) {
-            errorMessage = response.data.message;
-          }
-          throw new Error(errorMessage);
-        }
-      }
-    } catch (err) {
-      let errorMessage = 'No se pudo eliminar el administrador. Error del servidor.';
       
-      if (err.response) {
-        if (err.response.status === 404) {
-          errorMessage = 'El administrador no fue encontrado.';
-        } else if (err.response.status === 500) {
-          errorMessage = 'Error interno del servidor. Por favor, inténtelo de nuevo más tarde.';
+      // Use the confirmation dialog from context
+      showConfirmation({
+        title: '¿Estás seguro?',
+        message: "Esta acción eliminará permanentemente al administrador y no podrá ser recuperado.",
+        onConfirm: async () => {
+          try {
+            const response = await axios.delete(`http://localhost:8000/usuarios/eliminar/${id}/`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              validateStatus: function (status) {
+                return true;
+              }
+            });
+      
+            if (response.status === 200) {
+              setAdmins(prev => prev.filter(admin => admin.id !== id));
+              showAlert({ 
+                message: 'El administrador ha sido eliminado correctamente', 
+                severity: "success" 
+              });
+            } else {
+              let errorMessage = `Error del servidor (${response.status})`;
+              if (response.data && response.data.message) {
+                errorMessage = response.data.message;
+              }
+              throw new Error(errorMessage);
+            }
+          } catch (err) {
+            let errorMessage = 'No se pudo eliminar el administrador. Error del servidor.';
+            
+            if (err.response) {
+              if (err.response.status === 404) {
+                errorMessage = 'El administrador no fue encontrado.';
+              } else if (err.response.status === 500) {
+                errorMessage = 'Error interno del servidor. Por favor, inténtelo de nuevo más tarde.';
+              }
+            }
+        
+            showAlert({ 
+              message: errorMessage, 
+              severity: "error" 
+            });
+            console.error('Error al eliminar:', err);
+            console.error('Error details:', err.response?.data);
+          }
         }
-      }
-  
-      Swal.fire('Error', errorMessage, 'error');
-      console.error('Error al eliminar:', err);
-      console.error('Error details:', err.response?.data);
+      });
+    } catch (err) {
+      showAlert({ 
+        message: 'Error al procesar la solicitud', 
+        severity: "error" 
+      });
+      console.error(err);
     }
   };
 
@@ -242,93 +390,121 @@ const CrudAdmins = () => {
         
         const adminsData = refreshResponse.data.filter(user => user.rol === 'admin');
         setAdmins(adminsData);
-        Swal.fire('Éxito', 'Administrador actualizado correctamente', 'success');
+        showAlert({ 
+          message: 'Administrador actualizado correctamente', 
+          severity: "success" 
+        });
       }
     } catch (err) {
-      Swal.fire('Error', 'No se pudo actualizar el administrador', 'error');
+      showAlert({ 
+        message: 'No se pudo actualizar el administrador', 
+        severity: "error" 
+      });
       console.error(err);
     }
   };
 
   return (
     <>
-      <Card sx={styles.card}>
+      <StyledCard>
         <CardHeader
-          title="Gestión de Administradores" // Change title back
-          titleTypographyProps={{ variant: 'h5' }}
+          title={
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 600, color: theme.text }}
+            >
+              Gestión de Administradores
+            </Typography>
+          }
           sx={styles.header}
           action={
             <Box>
-              <Button
+              <StyledButton
                 variant="contained"
                 startIcon={<Add />}
                 onClick={handleCreateClick}
                 sx={styles.addButton}
               >
                 Agregar Administrador
-              </Button>
-              <IconButton
-                onClick={handleRefresh}
-                sx={styles.refreshButton}
-              >
-                <Refresh style={{ color: '#fff' }} />
+              </StyledButton>
+              <IconButton onClick={handleRefresh} sx={styles.refreshButton}>
+                <Refresh />
               </IconButton>
             </Box>
           }
         />
-        <CardContent>
-          {/* Remove the role filter selector */}
-
-          <TableContainer component={Paper} sx={{ mt: 2 }}>
-            <Table sx={{ minWidth: 650 }} aria-label="admins table"> {/* Change table label */}
+        <CardContent sx={{ p: 0 }}>
+          <TableContainer
+            component={Paper}
+            sx={{ boxShadow: "none", borderRadius: 0 }}
+          >
+            <Table sx={{ minWidth: 650 }} aria-label="admins table">
               <TableHead>
-                <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                  <TableCell sx={{ fontWeight: 600 }}>Usuario</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Nombre</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Correo</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Rol</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Fecha Creación</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Acciones</TableCell>
+                <TableRow sx={styles.tableHeader}>
+                  <TableCell sx={styles.tableHeaderCell}>Usuario</TableCell>
+                  <TableCell sx={styles.tableHeaderCell}>Nombre</TableCell>
+                  <TableCell sx={styles.tableHeaderCell}>Correo</TableCell>
+                  <TableCell sx={styles.tableHeaderCell}>Rol</TableCell>
+                  <TableCell sx={styles.tableHeaderCell}>Fecha Creación</TableCell>
+                  <TableCell sx={styles.tableHeaderCell}>Acciones</TableCell>
                 </TableRow>
               </TableHead>
               
               <TableBody>
-                {admins.map((admin) => ( // Change from filteredUsers to admins
-                  <TableRow key={admin.id}>
-                    <TableCell>{admin.username}</TableCell>
-                    <TableCell>{admin.nombre_completo}</TableCell>
-                    <TableCell>{admin.email}</TableCell>
-                    <TableCell>{admin.rol}</TableCell>
-                    <TableCell>
-                      {new Date(admin.fecha_creacion).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <IconButton 
-                        size="small" 
-                        sx={{ color: '#1976d2' }}
-                        onClick={() => handleEditClick(admin.id)}
+                {admins.length > 0 ? (
+                  admins.map((admin) => (
+                    <TableRow key={admin.id} sx={styles.tableRow}>
+                      <TableCell sx={styles.tableCell}>{admin.username}</TableCell>
+                      <TableCell sx={styles.tableCell}>{admin.nombre_completo}</TableCell>
+                      <TableCell sx={styles.tableCell}>{admin.email}</TableCell>
+                      <TableCell sx={styles.tableCell}>{admin.rol}</TableCell>
+                      <TableCell sx={styles.tableCell}>
+                        {new Date(admin.fecha_creacion).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell sx={styles.tableCell}>
+                        <IconButton 
+                          size="small" 
+                          sx={styles.editButton}
+                          onClick={() => handleEditClick(admin.id)}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton 
+                          size="small" 
+                          sx={styles.deleteButton}
+                          onClick={() => handleDelete(admin.id)}
+                          disabled={admin.id === currentUserId} // Disable delete button for current user
+                          style={admin.id === currentUserId ? { color: '#ccc', cursor: 'not-allowed' } : {}}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} sx={styles.emptyState}>
+                      <Typography variant="body1">
+                        No hay administradores registrados
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{ mt: 1, color: "#9e9e9e" }}
                       >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton 
-                        size="small" 
-                        sx={{ color: '#d32f2f' }}
-                        onClick={() => handleDelete(admin.id)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
+                        Haz clic en "Agregar Administrador" para crear uno nuevo
+                      </Typography>
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </TableContainer>
         </CardContent>
-      </Card>
+      </StyledCard>
 
       <ModalCreateAdmin
         open={openModal}
-        onClose={() => setOpenModal(false)}
+        onClose={handleCloseModal}
         onCreate={handleCreateAdmin}
       />
 

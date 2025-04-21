@@ -2,15 +2,45 @@
 
 import { useContext, useState } from "react";
 import { AuthContext } from "../../context/AuthorizationProvider";
-import { TextField, Button, Box, Typography, Link, IconButton, InputAdornment, Divider, Stack, FormControl, FormLabel, Checkbox, FormControlLabel, MenuItem, Select } from "@mui/material";
+import {
+  TextField,
+  Button,
+  Box,
+  Typography,
+  Link,
+  IconButton,
+  InputAdornment,
+  Divider,
+  Stack,
+  FormControl,
+  FormLabel,
+  Alert,
+  Snackbar,
+  Slide,
+} from "@mui/material";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import Image from "next/image";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import { styled } from '@mui/material/styles';
-import MuiCard from '@mui/material/Card';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack'; // Icono de regresar
+import { styled } from "@mui/material/styles";
+import MuiCard from "@mui/material/Card";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { useRouter } from "next/navigation";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import axios from "axios";
+import { useAlert } from "../../context/AlertContext"; // Import the useAlert hook
+
+// Paleta de colores basada en el logo
+const theme = {
+  primary: "#FFD700", // Amarillo/dorado del logo
+  secondary: "#4A4A4A", // Gris oscuro para contraste
+  accent: "#F5F5F5", // Gris claro para fondos
+  text: "#333333", // Casi negro para texto
+  white: "#FFFFFF", // Blanco puro
+  hover: "#E6C200", // Amarillo más oscuro para hover
+};
 
 // Esquema de validación con Yup
 const validationSchema = Yup.object({
@@ -22,58 +52,125 @@ const validationSchema = Yup.object({
     .matches(/[a-zA-Z]/, "Debe contener al menos una letra")
     .matches(/[0-9]/, "Debe contener al menos un número")
     .required("La contraseña es obligatoria"),
-  nombre_completo: Yup.string()
-    .required("El nombre completo es obligatorio"),
+  nombre_completo: Yup.string().required("El nombre completo es obligatorio"),
   email: Yup.string()
     .email("Correo inválido")
     .required("El correo es obligatorio"),
-  rol: Yup.string()
-    .required("El rol es obligatorio"),
 });
 
 const Card = styled(MuiCard)(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignSelf: 'center',
-  width: '100%',
+  display: "flex",
+  flexDirection: "column",
+  alignSelf: "center",
+  width: "100%",
   padding: theme.spacing(4),
   gap: theme.spacing(2),
-  margin: 'auto',
-  [theme.breakpoints.up('sm')]: {
-    maxWidth: '450px',
+  margin: "auto",
+  [theme.breakpoints.up("sm")]: {
+    maxWidth: "450px",
   },
-  boxShadow:
-    'hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px',
-  ...theme.applyStyles('dark', {
-    boxShadow:
-      'hsla(220, 30%, 5%, 0.5) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.08) 0px 15px 35px -5px',
-  }),
+  boxShadow: "0 10px 25px rgba(0, 0, 0, 0.05)",
+  borderRadius: "12px",
+  border: "1px solid #eee",
+  transition: "transform 0.3s ease, box-shadow 0.3s ease",
+  "&:hover": {
+    boxShadow: "0 15px 30px rgba(0, 0, 0, 0.08)",
+    transform: "translateY(-5px)",
+  },
 }));
 
 const SignInContainer = styled(Stack)(({ theme }) => ({
   padding: theme.spacing(2),
-  [theme.breakpoints.up('sm')]: {
+  minHeight: "100vh",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  [theme.breakpoints.up("sm")]: {
     padding: theme.spacing(4),
   },
-  '&::before': {
+  "&::before": {
     content: '""',
-    display: 'block',
-    position: 'absolute',
+    display: "block",
+    position: "absolute",
     zIndex: -1,
     inset: 0,
-    backgroundImage:
-      'radial-gradient(ellipse at 50% 50%, hsl(210, 100%, 97%), hsl(0, 0%, 100%))',
-    backgroundRepeat: 'no-repeat',
-    ...theme.applyStyles('dark', {
-      backgroundImage:
-        'radial-gradient(at 50% 50%, hsla(210, 100%, 16%, 0.5), hsl(220, 30%, 5%))',
-    }),
+    backgroundImage: "linear-gradient(to bottom right, #fff, #f8f9fa)",
+    backgroundRepeat: "no-repeat",
   },
 }));
 
+// Styled components for form elements
+const StyledTextField = styled(TextField)(() => ({
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "8px",
+    transition: "all 0.3s",
+    "&:hover .MuiOutlinedInput-notchedOutline": {
+      borderColor: theme.primary,
+    },
+    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+      borderColor: theme.primary,
+      borderWidth: "1px",
+    },
+  },
+  "& .MuiFormLabel-root.Mui-focused": {
+    color: theme.secondary,
+  },
+}));
+
+const StyledButton = styled(Button)(() => ({
+  borderRadius: "8px",
+  padding: "10px 0",
+  textTransform: "none",
+  fontWeight: "600",
+  backgroundColor: theme.primary,
+  color: theme.text,
+  boxShadow: "none",
+  transition: "all 0.3s",
+  "&:hover": {
+    backgroundColor: theme.hover,
+    boxShadow: `0 4px 12px rgba(255, 215, 0, 0.3)`,
+  },
+}));
+
+const StyledFormLabel = styled(FormLabel)(() => ({
+  color: theme.secondary,
+  fontWeight: "500",
+  marginBottom: "4px",
+}));
+
+// Styled alert components
+const StyledAlert = styled(Alert)(({ severity }) => ({
+  borderRadius: "8px",
+  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
+  fontWeight: "500",
+  alignItems: "center",
+  color: severity === "success" ? "#2e7d32" : "#d32f2f",
+  backgroundColor:
+    severity === "success"
+      ? "rgba(46, 125, 50, 0.08)"
+      : "rgba(211, 47, 47, 0.08)",
+  border: `1px solid ${
+    severity === "success" ? "rgba(46, 125, 50, 0.2)" : "rgba(211, 47, 47, 0.2)"
+  }`,
+  "& .MuiAlert-icon": {
+    color: severity === "success" ? "#2e7d32" : "#d32f2f",
+  },
+}));
+
+// Transition for Snackbar
+function SlideTransition(props) {
+  return <Slide {...props} direction="up" />;
+}
+
 const RegisterForm = () => {
-  const { register } = useContext(AuthContext); // Asume que tienes una función `register` en tu contexto
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const { showAlert } = useAlert(); // Use the alert hook
+
+  // Remove these state variables since they're now handled by the AlertContext
+  // const [alertOpen, setAlertOpen] = useState(false);
+  // const [alertMessage, setAlertMessage] = useState("");
+  // const [alertSeverity, setAlertSeverity] = useState("success");
 
   const formik = useFormik({
     initialValues: {
@@ -81,14 +178,77 @@ const RegisterForm = () => {
       password: "",
       nombre_completo: "",
       email: "",
-      rol: "",
     },
     validationSchema,
-    onSubmit: async (values, { setSubmitting, setErrors }) => {
+    onSubmit: async (values, { setSubmitting, setErrors, resetForm }) => {
       try {
-        await register(values); // Llama a la función de registro con los valores del formulario
+        // Add the default role to the values
+        const userData = {
+          ...values,
+          rol: "student", // Always set role to student
+        };
+
+        // Make direct API call using axios with full URL
+        // Update to use the correct API URL
+        const response = await axios.post(
+          "http://127.0.0.1:8000/usuarios/registrar/",
+          userData
+        );
+
+        if (response.status === 200) {
+          // Show success alert using the context
+          showAlert(
+            "¡Registro exitoso! Redirigiendo al inicio de sesión...",
+            "success"
+          );
+          // Reset form after successful registration
+          resetForm();
+
+          // Redirect to login after a short delay
+          setTimeout(() => {
+            router.push("/login");
+          }, 2000);
+        } else {
+          // Show error alert using the context
+          showAlert(
+            "Error al registrar. Por favor, inténtalo de nuevo.",
+            "error"
+          );
+        }
       } catch (error) {
-        setErrors({ password: "Error al registrar. Inténtalo de nuevo." });
+        // Show error alert with specific message using the context
+        let errorMessage = "Error al registrar. Por favor, inténtalo de nuevo.";
+
+        if (error.response) {
+          if (error.response.status === 404) {
+            errorMessage =
+              "Error: No se pudo conectar con el servidor de registro. Verifique la URL del API.";
+          } else if (error.response.data) {
+            if (error.response.data.detail) {
+              errorMessage = error.response.data.detail;
+            } else if (typeof error.response.data === "string") {
+              errorMessage = error.response.data;
+            } else if (error.response.data.message) {
+              errorMessage = error.response.data.message;
+            } else {
+              // If there's a validation error (common in Django REST Framework)
+              const firstErrorKey = Object.keys(error.response.data)[0];
+              if (
+                firstErrorKey &&
+                Array.isArray(error.response.data[firstErrorKey])
+              ) {
+                errorMessage = `${firstErrorKey}: ${error.response.data[firstErrorKey][0]}`;
+              }
+            }
+          }
+        } else if (error.request) {
+          errorMessage =
+            "No se recibió respuesta del servidor. Verifica tu conexión a internet.";
+        } else if (error.message) {
+          errorMessage = `Error: ${error.message}`;
+        }
+
+        showAlert(errorMessage, "error");
       }
       setSubmitting(false);
     },
@@ -99,9 +259,17 @@ const RegisterForm = () => {
   };
 
   const handleGoBack = () => {
-    // Lógica para regresar (puedes usar un router si estás en una SPA)
-    window.history.back();
+    router.push("/");
   };
+
+  // This function is no longer needed since alerts are handled by the context
+  // Remove this function
+  // const handleAlertClose = (event, reason) => {
+  //   if (reason === "clickaway") {
+  //     return;
+  //   }
+  //   setAlertOpen(false);
+  // };
 
   return (
     <SignInContainer direction="column" justifyContent="space-between">
@@ -109,19 +277,28 @@ const RegisterForm = () => {
       <Button
         startIcon={<ArrowBackIcon />}
         onClick={handleGoBack}
-        sx={{ alignSelf: 'flex-start', mb: 2 }}
+        sx={{
+          alignSelf: "flex-start",
+          mb: 2,
+          color: theme.secondary,
+          "&:hover": {
+            color: theme.primary,
+            backgroundColor: "transparent",
+          },
+        }}
       >
         Regresar al inicio
       </Button>
 
       <Card variant="outlined">
         {/* Logo */}
-        <Box sx={{ mb: 0, textAlign: 'center' }}>
+        <Box sx={{ mb: 0, textAlign: "center" }}>
           <Image
-            src="/logo.png" // Reemplaza con la ruta de tu imagen
+            src="/logo.png"
             alt="Logo"
-            width={180} // Ajusta el ancho según sea necesario
-            height={180} // Ajusta la altura según sea necesario
+            width={150}
+            height={150}
+            style={{ objectFit: "contain" }}
           />
         </Box>
 
@@ -129,7 +306,24 @@ const RegisterForm = () => {
         <Typography
           component="h1"
           variant="h4"
-          sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)', textAlign: 'center' }}
+          sx={{
+            width: "100%",
+            fontSize: "clamp(1.8rem, 8vw, 2rem)",
+            textAlign: "center",
+            fontWeight: "600",
+            color: theme.text,
+            position: "relative",
+            "&::after": {
+              content: '""',
+              position: "absolute",
+              bottom: "-10px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: "60px",
+              height: "3px",
+              backgroundColor: theme.primary,
+            },
+          }}
         >
           Registrarse
         </Typography>
@@ -139,20 +333,23 @@ const RegisterForm = () => {
           onSubmit={formik.handleSubmit}
           noValidate
           sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            width: '100%',
+            display: "flex",
+            flexDirection: "column",
+            width: "100%",
             gap: 2,
+            mt: 3,
           }}
         >
           {/* Campo de Nombre de Usuario */}
           <FormControl>
-            <FormLabel htmlFor="username">Nombre de usuario</FormLabel>
-            <TextField
+            <StyledFormLabel htmlFor="username">
+              Nombre de usuario
+            </StyledFormLabel>
+            <StyledTextField
               id="username"
               type="text"
               name="username"
-              placeholder="Nombre de usuario"
+              placeholder="Ingresa tu nombre de usuario"
               fullWidth
               variant="outlined"
               {...formik.getFieldProps("username")}
@@ -163,12 +360,12 @@ const RegisterForm = () => {
 
           {/* Campo de Contraseña */}
           <FormControl>
-            <FormLabel htmlFor="password">Contraseña</FormLabel>
-            <TextField
+            <StyledFormLabel htmlFor="password">Contraseña</StyledFormLabel>
+            <StyledTextField
               id="password"
               type={showPassword ? "text" : "password"}
               name="password"
-              placeholder="Contraseña"
+              placeholder="Ingresa tu contraseña"
               fullWidth
               variant="outlined"
               {...formik.getFieldProps("password")}
@@ -180,7 +377,7 @@ const RegisterForm = () => {
                     <IconButton
                       onClick={handleClickShowPassword}
                       edge="end"
-                      sx={{ color: "#666" }}
+                      sx={{ color: theme.secondary }}
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
@@ -192,28 +389,37 @@ const RegisterForm = () => {
 
           {/* Campo de Nombre Completo */}
           <FormControl>
-            <FormLabel htmlFor="nombre_completo">Nombre completo</FormLabel>
-            <TextField
+            <StyledFormLabel htmlFor="nombre_completo">
+              Nombre completo
+            </StyledFormLabel>
+            <StyledTextField
               id="nombre_completo"
               type="text"
               name="nombre_completo"
-              placeholder="Nombre completo"
+              placeholder="Ingresa tu nombre completo"
               fullWidth
               variant="outlined"
               {...formik.getFieldProps("nombre_completo")}
-              error={formik.touched.nombre_completo && Boolean(formik.errors.nombre_completo)}
-              helperText={formik.touched.nombre_completo && formik.errors.nombre_completo}
+              error={
+                formik.touched.nombre_completo &&
+                Boolean(formik.errors.nombre_completo)
+              }
+              helperText={
+                formik.touched.nombre_completo && formik.errors.nombre_completo
+              }
             />
           </FormControl>
 
           {/* Campo de Correo Electrónico */}
           <FormControl>
-            <FormLabel htmlFor="email">Correo electrónico</FormLabel>
-            <TextField
+            <StyledFormLabel htmlFor="email">
+              Correo electrónico
+            </StyledFormLabel>
+            <StyledTextField
               id="email"
               type="email"
               name="email"
-              placeholder="correo electrónico"
+              placeholder="Ingresa tu correo electrónico"
               fullWidth
               variant="outlined"
               {...formik.getFieldProps("email")}
@@ -222,43 +428,48 @@ const RegisterForm = () => {
             />
           </FormControl>
 
-          {/* Campo de Rol */}
-          <FormControl>
-            <FormLabel htmlFor="rol">Rol</FormLabel>
-            <Select
-              id="rol"
-              name="rol"
-              fullWidth
-              variant="outlined"
-              {...formik.getFieldProps("rol")}
-              error={formik.touched.rol && Boolean(formik.errors.rol)}
-            >
-              <MenuItem value="usuario">Usuario</MenuItem>
-              <MenuItem value="admin">Administrador</MenuItem>
-            </Select>
-          </FormControl>
+          {/* Removed the role field */}
 
           {/* Botón de Registro */}
-          <Button
+          <StyledButton
             type="submit"
             fullWidth
             variant="contained"
             disabled={formik.isSubmitting}
           >
             Registrarse
-          </Button>
+          </StyledButton>
         </Box>
 
         {/* Divider */}
-        <Divider>o</Divider>
+        <Divider
+          sx={{
+            my: 2,
+            "&::before, &::after": {
+              borderColor: "rgba(0, 0, 0, 0.08)",
+            },
+            "& .MuiDivider-wrapper": {
+              color: theme.secondary,
+            },
+          }}
+        >
+          o
+        </Divider>
 
         {/* Enlace para iniciar sesión */}
-        <Typography sx={{ textAlign: 'center', mt: 2 }}>
+        <Typography sx={{ textAlign: "center", mt: 1, color: theme.secondary }}>
           ¿Ya tienes una cuenta?{" "}
           <Link
-            href="/iniciar-sesion"
+            href="/login"
             variant="body2"
-            sx={{ alignSelf: 'center' }}
+            sx={{
+              color: theme.primary,
+              textDecoration: "none",
+              fontWeight: "600",
+              "&:hover": {
+                textDecoration: "underline",
+              },
+            }}
           >
             Inicia sesión
           </Link>

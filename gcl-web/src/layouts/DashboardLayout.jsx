@@ -1,11 +1,42 @@
 import { Box, AppBar, Toolbar, Typography, IconButton } from "@mui/material";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { AuthContext } from "../context/AuthorizationProvider";
 import LogoutIcon from "@mui/icons-material/Logout";
+import MenuIcon from "@mui/icons-material/Menu";
 import Sidebar from "../components/Sidebar/Sidebar";
+import { useAlert } from "../context/AlertContext";
+import { useRouter } from "next/navigation";
 
 const DashboardLayout = ({ children }) => {
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout, isLoggingOut } = useContext(AuthContext);
+  const { showAlert } = useAlert();
+  const router = useRouter();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  const handleLogout = async () => {
+    try {
+      // The logout function now handles everything including the redirect
+      await logout();
+
+      // Show success message
+      showAlert({
+        message: "Has cerrado sesión correctamente",
+        severity: "success",
+      });
+
+      // No need to navigate here as it's handled in the logout function
+    } catch (error) {
+      console.error("Error during logout:", error);
+      showAlert({
+        message: "Error al cerrar sesión",
+        severity: "error",
+      });
+    }
+  };
 
   return (
     <Box
@@ -25,7 +56,7 @@ const DashboardLayout = ({ children }) => {
           height: "64px",
           bgcolor: "white",
           zIndex: 1300,
-          display: "flex",
+          display: { xs: "none", sm: "flex" },
           alignItems: "center",
           justifyContent: "center",
           borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
@@ -46,14 +77,23 @@ const DashboardLayout = ({ children }) => {
         position="fixed"
         elevation={0}
         sx={{
-          width: { sm: `calc(100% - 240px)` },
-          ml: { sm: "240px" },
+          width: { xs: "100%", sm: `calc(100% - 240px)` },
+          ml: { xs: 0, sm: "240px" },
           bgcolor: "white",
           backdropFilter: "blur(20px)",
           borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
         }}
       >
         <Toolbar>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            edge="start"
+            onClick={handleDrawerToggle}
+            sx={{ mr: 2, display: { sm: 'none' }, color: "#1a1a1a" }}
+          >
+            <MenuIcon />
+          </IconButton>
           <Typography
             variant="h6"
             component="div"
@@ -76,7 +116,7 @@ const DashboardLayout = ({ children }) => {
             {user?.rol?.toUpperCase()}
           </Typography>
           <IconButton
-            onClick={logout}
+            onClick={handleLogout}
             sx={{
               color: "#1a1a1a",
               "&:hover": {
@@ -89,6 +129,13 @@ const DashboardLayout = ({ children }) => {
         </Toolbar>
       </AppBar>
 
+      <Sidebar 
+        rol={user?.rol} 
+        isMobile={true}
+        mobileOpen={mobileOpen}
+        onClose={handleDrawerToggle}
+      />
+      
       <Sidebar rol={user?.rol} />
 
       <Box
@@ -100,7 +147,7 @@ const DashboardLayout = ({ children }) => {
           minHeight: "100vh",
           overflow: "auto",
           pt: { xs: 8, sm: 9 },
-          pl: { sm: "240px" },
+          pl: { xs: 0, sm: "240px" },
           "& > *": {
             maxWidth: "100%",
           },
