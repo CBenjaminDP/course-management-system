@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Modal,
@@ -12,12 +12,12 @@ import {
   FormControl,
   Switch,
   FormControlLabel,
-  Grid
-} from '@mui/material';
-import axios from 'axios';
-import Cookies from 'js-cookie';
-import { useAlert } from '../../../context/AlertContext'; // Import the alert context
-import { styled } from '@mui/material/styles';
+  Grid,
+} from "@mui/material";
+import axios from "axios";
+import Cookies from "js-cookie";
+import { useAlert } from "../../../context/AlertContext"; // Import the alert context
+import { styled } from "@mui/material/styles";
 
 // Define theme colors to match login
 const theme = {
@@ -25,7 +25,7 @@ const theme = {
   secondary: "#4A4A4A",
   text: "#333333",
   hover: "#E6C200",
-  background: "#f8f9fa"
+  background: "#f8f9fa",
 };
 
 // Styled components for form elements
@@ -55,15 +55,15 @@ const StyledButton = styled(Button)(() => ({
   transition: "all 0.3s",
 }));
 
-const ModalUpdateCourse = ({ open, onClose, onUpdate, course }) => {
+const ModalUpdateCourse = ({ open, onClose, onUpdate, course, rol, id }) => {
   const [formData, setFormData] = useState({
-    nombre: '',
-    descripcion: '',
-    profesor: '',
-    fecha_inicio: '',
-    fecha_fin: '',
+    nombre: "",
+    descripcion: "",
+    profesor: "",
+    fecha_inicio: "",
+    fecha_fin: "",
     estado: true,
-    imagen_url: ''
+    imagen_url: "",
   });
   const [teachers, setTeachers] = useState([]);
   const [loadingTeachers, setLoadingTeachers] = useState(true);
@@ -73,21 +73,25 @@ const ModalUpdateCourse = ({ open, onClose, onUpdate, course }) => {
   useEffect(() => {
     const fetchTeachers = async () => {
       try {
-        const token = Cookies.get('accessToken');
-        const response = await axios.get('http://localhost:8000/usuarios/', {
+        const token = Cookies.get("accessToken");
+        const response = await axios.get("http://localhost:8000/usuarios/", {
           headers: {
-            Authorization: `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         });
-        setTeachers(response.data.filter(user => user.rol === 'teacher'));
+        setTeachers(response.data.filter((user) => user.rol === "teacher"));
       } catch (error) {
-        console.error('Error fetching teachers:', error);
+        console.error("Error fetching teachers:", error);
       } finally {
         setLoadingTeachers(false);
       }
     };
 
-    if (open) {
+    if (open && rol === "teacher") {
+      setFormData((prev) => ({ ...prev, profesor: id }));
+      fetchTeachers();
+    } else {
+      setFormData((prev) => ({ ...prev, profesor: "" }));
       fetchTeachers();
     }
   }, [open]);
@@ -97,59 +101,63 @@ const ModalUpdateCourse = ({ open, onClose, onUpdate, course }) => {
       setFormData({
         nombre: course.nombre,
         descripcion: course.descripcion,
-        profesor: course.profesor?.id || '',
+        profesor: course.profesor?.id || "",
         fecha_inicio: course.fecha_inicio,
         fecha_fin: course.fecha_fin,
         estado: course.estado,
-        imagen_url: course.imagen_url || ''
+        imagen_url: course.imagen_url || "",
       });
     }
   }, [course]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleStatusChange = (e) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      estado: e.target.checked
+      estado: e.target.checked,
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
-      const token = Cookies.get('accessToken');
-      await axios.put(`http://localhost:8000/cursos/actualizar_curso/${course.id}/`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      const token = Cookies.get("accessToken");
+      await axios.put(
+        `http://localhost:8000/cursos/actualizar_curso/${course.id}/`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
-      });
-  
+      );
+
       // Close modal first
       onClose();
-      
+
       // Then show success message using alert context
       showAlert({
-        message: 'Curso actualizado correctamente',
-        severity: 'success'
+        message: "Curso actualizado correctamente",
+        severity: "success",
       });
-      
+
       // Finally trigger refresh
       onUpdate();
     } catch (error) {
-      console.error('Error updating course:', error);
+      console.error("Error updating course:", error);
       showAlert({
-        message: 'No se pudo actualizar el curso',
-        severity: 'error'
+        message: "No se pudo actualizar el curso",
+        severity: "error",
       });
     } finally {
       setIsSubmitting(false);
@@ -157,24 +165,32 @@ const ModalUpdateCourse = ({ open, onClose, onUpdate, course }) => {
   };
 
   return (
-    <Modal open={open} onClose={onClose} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <Box sx={{ 
-        backgroundColor: 'white', 
-        borderRadius: '12px', 
-        width: '500px', 
-        boxShadow: 24, 
-        p: 3 
-      }}>
-        <Box sx={{ 
-          backgroundColor: theme.primary, 
-          color: theme.text, 
-          borderRadius: '12px 12px 0 0', 
-          p: 2, 
-          mb: 2 
-        }}>
+    <Modal
+      open={open}
+      onClose={onClose}
+      sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+    >
+      <Box
+        sx={{
+          backgroundColor: "white",
+          borderRadius: "12px",
+          width: "500px",
+          boxShadow: 24,
+          p: 3,
+        }}
+      >
+        <Box
+          sx={{
+            backgroundColor: theme.primary,
+            color: theme.text,
+            borderRadius: "12px 12px 0 0",
+            p: 2,
+            mb: 2,
+          }}
+        >
           <Typography variant="h6">Editar Curso</Typography>
         </Box>
-        
+
         <form onSubmit={handleSubmit}>
           <Stack spacing={3}>
             <StyledTextField
@@ -185,7 +201,7 @@ const ModalUpdateCourse = ({ open, onClose, onUpdate, course }) => {
               fullWidth
               required
             />
-            
+
             <StyledTextField
               label="Descripción"
               name="descripcion"
@@ -195,36 +211,38 @@ const ModalUpdateCourse = ({ open, onClose, onUpdate, course }) => {
               multiline
               rows={4}
             />
-            
-            <FormControl fullWidth>
-              <InputLabel>Profesor</InputLabel>
-              <Select
-                name="profesor"
-                value={formData.profesor}
-                onChange={handleChange}
-                label="Profesor"
-                disabled={loadingTeachers}
-                required
-                sx={{
-                  borderRadius: "8px",
-                  "& .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "rgba(0, 0, 0, 0.23)",
-                  },
-                  "&:hover .MuiOutlinedInput-notchedOutline": {
-                    borderColor: theme.primary,
-                  },
-                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                    borderColor: theme.primary,
-                  }
-                }}
-              >
-                {teachers.map(teacher => (
-                  <MenuItem key={teacher.id} value={teacher.id}>
-                    {teacher.username}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+
+            {rol !== "teacher" && (
+              <FormControl fullWidth>
+                <InputLabel>Profesor</InputLabel>
+                <Select
+                  name="profesor"
+                  value={formData.profesor}
+                  onChange={handleChange}
+                  label="Profesor"
+                  disabled={loadingTeachers}
+                  required
+                  sx={{
+                    borderRadius: "8px",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "rgba(0, 0, 0, 0.23)",
+                    },
+                    "&:hover .MuiOutlinedInput-notchedOutline": {
+                      borderColor: theme.primary,
+                    },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: theme.primary,
+                    },
+                  }}
+                >
+                  {teachers.map((teacher) => (
+                    <MenuItem key={teacher.id} value={teacher.id}>
+                      {teacher.username}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
 
             <Grid container spacing={2} alignItems="flex-end">
               <Grid item xs={6}>
@@ -238,7 +256,7 @@ const ModalUpdateCourse = ({ open, onClose, onUpdate, course }) => {
                   InputLabelProps={{ shrink: true }}
                   required
                   inputProps={{
-                    min: new Date().toISOString().split('T')[0]
+                    min: new Date().toISOString().split("T")[0],
                   }}
                 />
               </Grid>
@@ -253,13 +271,15 @@ const ModalUpdateCourse = ({ open, onClose, onUpdate, course }) => {
                   InputLabelProps={{ shrink: true }}
                   required
                   inputProps={{
-                    min: formData.fecha_inicio || new Date().toISOString().split('T')[0]
+                    min:
+                      formData.fecha_inicio ||
+                      new Date().toISOString().split("T")[0],
                   }}
                 />
               </Grid>
             </Grid>
 
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
               <Typography variant="body1" sx={{ mr: 2 }}>
                 Estado:
               </Typography>
@@ -284,40 +304,47 @@ const ModalUpdateCourse = ({ open, onClose, onUpdate, course }) => {
               fullWidth
             />
 
-            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-              <StyledButton 
-                variant="outlined" 
+            <Box
+              sx={{
+                mt: 3,
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 2,
+              }}
+            >
+              <StyledButton
+                variant="outlined"
                 onClick={onClose}
-                sx={{ 
-                  borderRadius: '20px',
+                sx={{
+                  borderRadius: "20px",
                   borderColor: theme.secondary,
                   color: theme.secondary,
-                  '&:hover': {
+                  "&:hover": {
                     borderColor: theme.secondary,
-                    backgroundColor: 'rgba(74, 74, 74, 0.04)'
-                  }
+                    backgroundColor: "rgba(74, 74, 74, 0.04)",
+                  },
                 }}
               >
                 Cancelar
               </StyledButton>
-              <StyledButton 
-                type="submit" 
-                variant="contained" 
-                sx={{ 
-                  borderRadius: '20px',
+              <StyledButton
+                type="submit"
+                variant="contained"
+                sx={{
+                  borderRadius: "20px",
                   backgroundColor: theme.primary,
                   color: theme.text,
-                  '&:hover': {
-                    backgroundColor: theme.hover
+                  "&:hover": {
+                    backgroundColor: theme.hover,
                   },
-                  '&.Mui-disabled': {
-                    backgroundColor: 'rgba(255, 215, 0, 0.5)',
-                    color: 'rgba(51, 51, 51, 0.7)'
-                  }
+                  "&.Mui-disabled": {
+                    backgroundColor: "rgba(255, 215, 0, 0.5)",
+                    color: "rgba(51, 51, 51, 0.7)",
+                  },
                 }}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'Actualizando...' : 'Actualizar Curso'}
+                {isSubmitting ? "Actualizando..." : "Actualizar Curso"}
               </StyledButton>
             </Box>
           </Stack>

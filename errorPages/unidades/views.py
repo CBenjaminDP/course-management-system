@@ -6,7 +6,7 @@ from .forms import UnidadForm
 from django.shortcuts import redirect
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
-from cursos.models import Curso  # Agrega esta importación
+from cursos.models import Curso
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 
@@ -30,6 +30,32 @@ def listar_unidades(request):
         for unidad in unidades
     ]
     return JsonResponse(data, safe=False)
+
+# Nueva función para obtener unidades por curso
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def unidades_por_curso(request, curso_id):
+    try:
+        # Verificar que el curso existe
+        curso = get_object_or_404(Curso, id=curso_id)
+        
+        # Obtener todas las unidades que pertenecen a ese curso
+        unidades = Unidad.objects.filter(curso=curso).order_by('orden')
+        
+        # Formatear la respuesta
+        data = [
+            {
+                'id': str(unidad.id),
+                'nombre': unidad.nombre,
+                'curso_id': str(unidad.curso.id),
+                'curso_nombre': unidad.curso.nombre,
+                'orden': unidad.orden
+            }
+            for unidad in unidades
+        ]
+        return JsonResponse(data, safe=False)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
 
 #Funcion que registre sin recargar la pagina osea sin hacer render
 @csrf_exempt
@@ -129,4 +155,3 @@ def obtener_unidad(request, id):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
     return JsonResponse({'error': 'Método no permitido'}, status=405)
-

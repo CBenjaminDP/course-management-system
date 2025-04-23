@@ -1,4 +1,13 @@
-import { Typography, Box, Paper, Grid, TextField, Button, InputAdornment, IconButton } from "@mui/material";
+import {
+  Typography,
+  Box,
+  Paper,
+  Grid,
+  TextField,
+  Button,
+  InputAdornment,
+  IconButton,
+} from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../../context/AuthorizationProvider";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
@@ -43,10 +52,13 @@ const AdminDashboard = () => {
     setSuccess("");
 
     // Password validation
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
     if (!passwordRegex.test(passwordForm.newPassword)) {
-      setError("La contraseña debe tener al menos 8 caracteres, una letra mayúscula, una minúscula, un número y un carácter especial");
+      setError(
+        "La contraseña debe tener al menos 8 caracteres, una letra mayúscula, una minúscula, un número y un carácter especial"
+      );
       return;
     }
 
@@ -258,10 +270,16 @@ const AdminDashboard = () => {
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
-                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      onClick={() =>
+                        setShowCurrentPassword(!showCurrentPassword)
+                      }
                       edge="end"
                     >
-                      {showCurrentPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      {showCurrentPassword ? (
+                        <VisibilityOffIcon />
+                      ) : (
+                        <VisibilityIcon />
+                      )}
                     </IconButton>
                   </InputAdornment>
                 ),
@@ -297,10 +315,16 @@ const AdminDashboard = () => {
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
                       edge="end"
                     >
-                      {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      {showConfirmPassword ? (
+                        <VisibilityOffIcon />
+                      ) : (
+                        <VisibilityIcon />
+                      )}
                     </IconButton>
                   </InputAdornment>
                 ),

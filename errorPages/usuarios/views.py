@@ -11,6 +11,13 @@ from django.contrib.auth.hashers import check_password, make_password
 from django.views.decorators.csrf import csrf_exempt
 from uuid import UUID
 
+
+import secrets
+from django.core.mail import send_mail
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.hashers import make_password
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def listar_usuarios(request):
@@ -282,3 +289,185 @@ def cambiar_password(request, id):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
     return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+
+
+@csrf_exempt
+def send_reset_email(request):
+    if request.method == "POST":
+        email = request.POST.get("email")
+        user = Usuario.objects.filter(email=email).first() 
+
+        if user:
+            token = secrets.token_urlsafe(20)
+            user.token = token
+            user.save()
+            reset_link = f"http://localhost:3000/login/recover/reset-password/{token}"
+            
+            # Colores basados en la misma paleta utilizada en los componentes frontend
+            primary_color = "#FFD700"  # Amarillo/dorado del logo
+            secondary_color = "#4A4A4A"  # Gris oscuro para contraste
+            text_color = "#333333"  # Casi negro para texto
+            bg_color = "#F8F9FA"  # Fondo suave
+            accent_color = "#E6C200"  # Amarillo más oscuro para hover
+            
+            send_mail(
+                subject="Recuperación de contraseña - ErrorPages",
+                message=f"Hola, usa este enlace para restablecer tu contraseña: {reset_link}",  
+                from_email="no-reply@errorpages.com",
+                recipient_list=[email],
+                fail_silently=False,
+                html_message=f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Recuperación de contraseña</title>
+                </head>
+                <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: {text_color}; background-color: #f4f4f4;">
+                    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                        <!-- Cabecera -->
+                        <div style="background-color: {primary_color}; text-align: center; padding: 15px; border-radius: 10px 10px 0 0;">
+                            <img src="https://i.ibb.co/LDQm0hN9/logo.png" alt="ErrorPages Logo" style="max-width: 150px; height: auto;">
+                        </div>
+                        
+                        <!-- Contenido principal -->
+                        <div style="background-color: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); border: 1px solid #eee;">
+                            <h2 style="color: {secondary_color}; margin-top: 0; margin-bottom: 20px; text-align: center; font-size: 24px; position: relative;">
+                                Recuperación de contraseña
+                                <span style="display: block; width: 60px; height: 3px; background-color: {primary_color}; margin: 15px auto 0;"></span>
+                            </h2>
+                            
+                            <p style="margin-bottom: 15px; font-size: 16px; line-height: 1.5;">Hola,</p>
+                            <p style="margin-bottom: 25px; font-size: 16px; line-height: 1.5;">Has solicitado restablecer tu contraseña para tu cuenta en ErrorPages. Para continuar con este proceso, haz clic en el botón de abajo:</p>
+                            
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="{reset_link}" 
+                                   style="display: inline-block; padding: 14px 30px; background-color: {primary_color}; color: {text_color}; 
+                                   text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;
+                                   box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3); transition: all 0.3s ease;">
+                                    Restablecer contraseña
+                                </a>
+                            </div>
+                            
+                            <p style="margin-bottom: 10px; font-size: 14px; line-height: 1.5; color: {secondary_color};">Si el botón no funciona, copia y pega este enlace en tu navegador:</p>
+                            <div style="background-color: {bg_color}; padding: 12px; border-radius: 6px; margin-bottom: 25px; word-break: break-all;">
+                                <a href="{reset_link}" style="color: {secondary_color}; font-size: 14px; text-decoration: none;">{reset_link}</a>
+                            </div>
+                            
+                            <p style="margin-bottom: 25px; font-size: 16px; line-height: 1.5;">Este enlace expirará en 24 horas. Si no solicitaste este cambio, puedes ignorar este mensaje y tu contraseña seguirá siendo la misma.</p>
+                            
+                            <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; text-align: center;">
+                                <p style="margin-bottom: 5px; font-size: 14px; color: {secondary_color};">Saludos,</p>
+                                <p style="margin-top: 0; font-weight: 600; font-size: 14px; color: {secondary_color};">El equipo de ProyectoUtez</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Pie de página -->
+                        <div style="text-align: center; padding: 20px; font-size: 12px; color: #777;">
+                            <p style="margin-bottom: 10px;">© 2025 ProyectoUtez. Todos los derechos reservados.</p>
+                            <p style="margin-bottom: 0;">Por favor no respondas a este correo electrónico, ya que es una dirección de envío automatizada.</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                """
+            )
+            return JsonResponse({"message": "Correo de recuperación enviado."}, status=200)
+        return JsonResponse({"error": "Usuario no encontrado"}, status=404)
+
+
+@csrf_exempt
+def reset_password(request):
+    if request.method == "POST":
+        token = request.POST.get("token")
+        new_password = request.POST.get("password")
+        user = Usuario.objects.filter(token=token).first()  
+
+        if user:
+            user.password = make_password(new_password)  
+            user.token = ''  
+            user.save()
+            
+            # URL de inicio de sesión
+            login_url = "http://localhost:3000/login"
+            
+            # Colores basados en la misma paleta utilizada en los componentes frontend
+            primary_color = "#FFD700"  # Amarillo/dorado del logo
+            secondary_color = "#4A4A4A"  # Gris oscuro para contraste
+            text_color = "#333333"  # Casi negro para texto
+            bg_color = "#F8F9FA"  # Fondo suave
+            accent_color = "#E6C200"  # Amarillo más oscuro para hover
+        
+
+            send_mail(
+                subject="Contraseña restablecida con éxito - ErrorPages",
+                message=f"Tu contraseña fue cambiada con éxito!",  
+                from_email="no-reply@errorpages.com",
+                recipient_list=[user.email],
+                fail_silently=False,
+                html_message=f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Contraseña restablecida con éxito</title>
+                </head>
+                <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: {text_color}; background-color: #f4f4f4;">
+                    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                        <!-- Cabecera -->
+                        <div style="background-color: {primary_color}; text-align: center; padding: 15px; border-radius: 10px 10px 0 0;">
+                            <img src="https://i.ibb.co/LDQm0hN9/logo.png" alt="ErrorPages Logo" style="max-width: 150px; height: auto;">
+                        </div>
+                        
+                        <!-- Contenido principal -->
+                        <div style="background-color: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); border: 1px solid #eee;">
+                            <div style="text-align: center; margin-bottom: 25px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="{primary_color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                </svg>
+                            </div>
+                            
+                            <h2 style="color: {secondary_color}; margin-top: 0; margin-bottom: 20px; text-align: center; font-size: 24px; position: relative;">
+                                ¡Tu contraseña ha sido restablecida con éxito!
+                                <span style="display: block; width: 60px; height: 3px; background-color: {primary_color}; margin: 15px auto 0;"></span>
+                            </h2>
+                            
+                            <p style="margin-bottom: 15px; font-size: 16px; line-height: 1.5;">Hola,</p>
+                            <p style="margin-bottom: 25px; font-size: 16px; line-height: 1.5;">Tu contraseña ha sido cambiada exitosamente. Ya puedes acceder a tu cuenta con tu nueva contraseña.</p>
+                            
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="{login_url}" 
+                                   style="display: inline-block; padding: 14px 30px; background-color: {primary_color}; color: {text_color}; 
+                                   text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;
+                                   box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3); transition: all 0.3s ease;">
+                                    Iniciar sesión
+                                </a>
+                            </div>
+                            
+                            <div style="background-color: #FFF4E5; padding: 15px; border-left: 4px solid #FFB74D; border-radius: 4px; margin: 30px 0;">
+                                <p style="margin: 0; font-size: 14px; line-height: 1.5;"><strong>Nota importante:</strong> Si no solicitaste este cambio de contraseña, tu cuenta podría estar comprometida. Por favor, ponte en contacto inmediatamente con nuestro equipo de soporte en <a href="mailto:admin@ProyectoUtez.com" style="color: {secondary_color}; font-weight: 600;">admin@errorpages.com</a>.</p>
+                            </div>
+                            
+                            <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; text-align: center;">
+                                <p style="margin-bottom: 5px; font-size: 14px; color: {secondary_color};">Saludos,</p>
+                                <p style="margin-top: 0; font-weight: 600; font-size: 14px; color: {secondary_color};">El equipo de ProyectoUtez</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Pie de página -->
+                        <div style="text-align: center; padding: 20px; font-size: 12px; color: #777;">
+                            <p style="margin-bottom: 10px;">© 2025 ProyectoUtez. Todos los derechos reservados.</p>
+                            <p style="margin-bottom: 0;">Por favor no respondas a este correo electrónico, ya que es una dirección de envío automatizada.</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                """
+            )
+
+            return JsonResponse({"message": "Contraseña restablecida exitosamente."})
+        return JsonResponse({"error": "Token inválido"}, status=400)

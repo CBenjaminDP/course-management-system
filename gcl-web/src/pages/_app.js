@@ -4,13 +4,13 @@ import { AlertProvider } from "../context/AlertContext";
 
 function MyApp({ Component, pageProps }) {
   return (
-    <AuthorizationProvider>
-      <AlertProvider>
+    <AlertProvider>
+      <AuthorizationProvider>
         <AuthGuard>
           <Component {...pageProps} />
         </AuthGuard>
-      </AlertProvider>
-    </AuthorizationProvider>
+      </AuthorizationProvider>
+    </AlertProvider>
   );
 }
 

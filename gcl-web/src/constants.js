@@ -18,38 +18,27 @@ export const MENU_OPTIONS = {
       url: "/admin/manage/courses",
       subPages: [
         { label: "Cursos", url: "/admin/manage/courses/" },
-        { label: "Unidades", url: "/admin/manage/courses/units" },
-        { label: "Temas", url: "/admin/manage/courses/topics" },
-        { label: "Tareas", url: "/admin/manage/courses/tasks" },
       ],
     },
   ],
   teacher: [
     {
-      label: "Mis Cursos",
-      url: "/teacher/assignments/courses/manage",
-      subPages: [
-        { label: "Gestionar", url: "/teacher/courses/manage" },
-        { label: "Calificaciones", url: "/teacher/courses/grades" },
-      ],
+      label: "Inicio",
+      url: "/dashboard", 
     },
     {
-      label: "Tareas",
-      url: "/teacher/assignments",
+      label: "Mis Cursos",
+      url: "/teacher/courses/manage",
     },
   ],
   student: [
     {
+      label: "Inicio",
+      url: "/dashboard", 
+    },
+    {
       label: "Mis Cursos",
       url: "/student/courses",
-    },
-    {
-      label: "Tareas Pendientes",
-      url: "/student/assignments",
-    },
-    {
-      label: "Cursos Completados",
-      url: "/student/passed-courses",
     },
     {
       label: "Más Cursos",

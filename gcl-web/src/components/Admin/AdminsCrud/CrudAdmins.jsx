@@ -245,6 +245,7 @@ const CrudAdmins = () => {
         message: err.response?.data?.error || 'No se pudo crear el administrador', 
         severity: "error" 
       });
+      setOpenModal(false); // Cerrar el modal en caso de error
       console.error(err);
       return false;
     }

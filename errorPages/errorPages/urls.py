@@ -27,7 +27,7 @@ urlpatterns = [
     path('inscripciones/', include('inscripciones.urls')),
     path('cursos/', include('cursos.urls')),
     path('usuarios/', include('usuarios.urls')),
-    path('unidades/', include('unidades.urls')),  # Add this line
+    path('unidades/', include('unidades.urls')),  
     path('temas/', include('temas.urls')),
     path('tareas/', include('tareas.urls')),
     path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),

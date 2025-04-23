@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
+import Swal from "sweetalert2";
 
 export const AuthContext = createContext();
 
@@ -67,9 +68,22 @@ const AuthorizationProvider = ({ children }) => {
         ...decoded,
       });
 
+      Swal.fire({
+        title: "¡Éxito!",
+        text: "Inicio de sesión exitoso",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
       router.push("/dashboard");
       return response.data;
     } catch (error) {
+      Swal.fire({
+        title: "Error",
+        text: error.response?.data?.detail || "Error al iniciar sesión",
+        icon: "error",
+      });
       throw new Error(
         error.response?.data?.detail || "Error al iniciar sesión"
       );
@@ -78,29 +92,36 @@ const AuthorizationProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      // Immediately set logging out state to true
       setIsLoggingOut(true);
-      
-      // Clear cookies with path specified to ensure they're properly removed
+
       Cookies.remove("accessToken", { path: "/" });
       Cookies.remove("refreshToken", { path: "/" });
-
-      // Clear localStorage if you're using it
       localStorage.removeItem("user");
-
-      // Clear user state
       setUser(null);
-      
-      // Use a small timeout to ensure the redirect happens after state updates
-      setTimeout(() => {
-        window.location.href = '/login';
-      }, 50);
 
-      // Return a resolved promise to indicate success
+      Swal.fire({
+        title: "¡Hasta pronto!",
+        text: "Has cerrado sesión correctamente",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 1500);
+
       return Promise.resolve();
     } catch (error) {
       console.error("Error during logout:", error);
-      setIsLoggingOut(false); // Reset loading state on error
+      setIsLoggingOut(false);
+
+      Swal.fire({
+        title: "Error",
+        text: "Error al cerrar sesión",
+        icon: "error",
+      });
+
       return Promise.reject(error);
     }
   };
@@ -125,20 +146,24 @@ const AuthorizationProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, validateToken, isLoggingOut }}>
+    <AuthContext.Provider
+      value={{ user, login, logout, validateToken, isLoggingOut }}
+    >
       {isLoggingOut && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'white',
-          zIndex: 9999,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}>
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "white",
+            zIndex: 9999,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
           <div>Cerrando sesión...</div>
         </div>
       )}

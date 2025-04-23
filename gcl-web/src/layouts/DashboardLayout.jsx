@@ -90,7 +90,7 @@ const DashboardLayout = ({ children }) => {
             aria-label="open drawer"
             edge="start"
             onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' }, color: "#1a1a1a" }}
+            sx={{ mr: 2, display: { sm: "none" }, color: "#1a1a1a" }}
           >
             <MenuIcon />
           </IconButton>
@@ -129,13 +129,13 @@ const DashboardLayout = ({ children }) => {
         </Toolbar>
       </AppBar>
 
-      <Sidebar 
-        rol={user?.rol} 
+      <Sidebar
+        rol={user?.rol}
         isMobile={true}
         mobileOpen={mobileOpen}
         onClose={handleDrawerToggle}
       />
-      
+
       <Sidebar rol={user?.rol} />
 
       <Box

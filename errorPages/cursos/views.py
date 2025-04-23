@@ -5,9 +5,16 @@ from .models import Curso
 from .forms import CursoForm
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
-from usuarios.models import Usuario  # Agrega este import al inicio
+from usuarios.models import Usuario
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from uuid import UUID
+
+# Nuevas importaciones
+from unidades.models import Unidad
+from temas.models import Tema
+from tareas.models import Tarea
+
 
 #Metodo que devuelve el JSON
 @api_view(['GET'])
@@ -146,3 +153,125 @@ def eliminar_curso(request, id):
     #Si el metodo no es DELETE
     return JsonResponse({'error': 'Método no permitido'}, status=405)
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def cursos_por_profesor(request, profesor_id):  # no hace falta cambiar tipo aquí si usas <str> o <uuid>
+    try:
+        profesor = Usuario.objects.get(id=profesor_id)
+        cursos = Curso.objects.filter(profesor=profesor)
+        data = [
+            {
+                'id': curso.id,
+                'nombre': curso.nombre,
+                'descripcion': curso.descripcion,
+                'profesor': {
+                    'id': curso.profesor.id,
+                    'nombre': curso.profesor.username,
+                },
+                'fecha_inicio': curso.fecha_inicio.isoformat() if curso.fecha_inicio else None,
+                'fecha_fin': curso.fecha_fin.isoformat() if curso.fecha_fin else None,
+                'estado': curso.estado,
+                'imagen_url': curso.imagen_url,
+            }
+            for curso in cursos
+        ]
+        return JsonResponse(data, safe=False)
+    except Usuario.DoesNotExist:
+        return JsonResponse({'error': 'Profesor no encontrado'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def detalle_curso(request, pk):
+    
+    if request.method == 'GET':
+        try:
+            curso = get_object_or_404(Curso, pk=pk)
+            data = {
+                'id': curso.id,
+                'nombre': curso.nombre,
+                'descripcion': curso.descripcion,
+                'profesor': {
+                    'id': curso.profesor.id,
+                    'nombre': curso.profesor.username,
+                    'email': curso.profesor.email
+                },
+                'fecha_inicio': curso.fecha_inicio.isoformat() if curso.fecha_inicio else None,
+                'fecha_fin': curso.fecha_fin.isoformat() if curso.fecha_fin else None,
+                'estado': curso.estado,
+                'imagen_url': curso.imagen_url,
+            }
+            return JsonResponse(data, status=200)
+        except Curso.DoesNotExist:
+            return JsonResponse({'error': 'El curso no existe'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+
+
+@csrf_exempt
+@api_view(['GET'])
+def detalle_curso_completo(request, pk):
+    if request.method == 'GET':
+        try:
+            curso = get_object_or_404(Curso, pk=pk)
+            unidades = Unidad.objects.filter(curso=curso).order_by('orden')
+
+            unidades_data = []
+            for unidad in unidades:
+                temas = Tema.objects.filter(unidad=unidad).order_by('orden')
+                temas_data = []
+                for tema in temas:
+                    tareas = Tarea.objects.filter(tema=tema)
+                    tareas_data = [
+                        {
+                            'id': str(tarea.id),
+                            'titulo': tarea.titulo,
+                            'descripcion': tarea.descripcion,
+                            'tipo': getattr(tarea, 'tipo', 'assignment'),
+                            'fecha_entrega': tarea.fecha_entrega.isoformat() if tarea.fecha_entrega else None
+                        }
+                        for tarea in tareas
+                    ]
+                    temas_data.append({
+                        'id': str(tema.id),
+                        'nombre': tema.nombre,
+                        'descripcion': tema.descripcion,
+                        'orden': tema.orden,
+                        'tareas': tareas_data
+                    })
+                unidades_data.append({
+                    'id': str(unidad.id),
+                    'nombre': unidad.nombre,
+                    'orden': unidad.orden,
+                    'temas': temas_data
+                })
+
+            data = {
+                'id': curso.id,
+                'nombre': curso.nombre,
+                'descripcion': curso.descripcion,
+                'profesor': {
+                    'id': curso.profesor.id,
+                    'nombre': curso.profesor.username,
+                    'email': curso.profesor.email
+                },
+                'fecha_inicio': curso.fecha_inicio.isoformat() if curso.fecha_inicio else None,
+                'fecha_fin': curso.fecha_fin.isoformat() if curso.fecha_fin else None,
+                'estado': curso.estado,
+                'imagen_url': curso.imagen_url,
+                'unidades': unidades_data
+            }
+
+            return JsonResponse(data, status=200)
+
+        except Curso.DoesNotExist:
+            return JsonResponse({'error': 'El curso no existe'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+    return JsonResponse({'error': 'Método no permitido'}, status=405)

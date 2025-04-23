@@ -1,36 +1,29 @@
 "use client";
 
-import { useContext, useState } from "react";
-import { AuthContext } from "../../context/AuthorizationProvider";
+import { useState } from "react";
 import {
   TextField,
   Button,
   Box,
   Typography,
   Link,
-  IconButton,
-  InputAdornment,
   Divider,
   Stack,
   FormControl,
   FormLabel,
-  Alert,
-  Snackbar,
-  Slide,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
 } from "@mui/material";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import Image from "next/image";
-import Visibility from "@mui/icons-material/Visibility";
-import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { styled } from "@mui/material/styles";
 import MuiCard from "@mui/material/Card";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useRouter } from "next/navigation";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import axios from "axios";
-import { useAlert } from "../../context/AlertContext"; // Import the useAlert hook
+import { useAlert } from "../../context/AlertContext";
 
 // Paleta de colores basada en el logo
 const theme = {
@@ -42,20 +35,17 @@ const theme = {
   hover: "#E6C200", // Amarillo más oscuro para hover
 };
 
-// Esquema de validación con Yup
+// Esquema de validación con Yup - Simplificado para nombre y correo
 const validationSchema = Yup.object({
-  username: Yup.string()
-    .min(3, "El nombre de usuario debe tener al menos 3 caracteres")
-    .required("El nombre de usuario es obligatorio"),
-  password: Yup.string()
-    .min(8, "La contraseña debe tener al menos 8 caracteres")
-    .matches(/[a-zA-Z]/, "Debe contener al menos una letra")
-    .matches(/[0-9]/, "Debe contener al menos un número")
-    .required("La contraseña es obligatoria"),
-  nombre_completo: Yup.string().required("El nombre completo es obligatorio"),
+  nombre_completo: Yup.string()
+    .required("El nombre completo es obligatorio")
+    .min(3, "El nombre debe tener al menos 3 caracteres"),
   email: Yup.string()
     .email("Correo inválido")
     .required("El correo es obligatorio"),
+  rol: Yup.string()
+    .required("El rol es obligatorio")
+    .oneOf(["student", "teacher"], "Rol inválido"),
 });
 
 const Card = styled(MuiCard)(({ theme }) => ({
@@ -138,91 +128,67 @@ const StyledFormLabel = styled(FormLabel)(() => ({
   marginBottom: "4px",
 }));
 
-// Styled alert components
-const StyledAlert = styled(Alert)(({ severity }) => ({
-  borderRadius: "8px",
-  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
-  fontWeight: "500",
-  alignItems: "center",
-  color: severity === "success" ? "#2e7d32" : "#d32f2f",
-  backgroundColor:
-    severity === "success"
-      ? "rgba(46, 125, 50, 0.08)"
-      : "rgba(211, 47, 47, 0.08)",
-  border: `1px solid ${
-    severity === "success" ? "rgba(46, 125, 50, 0.2)" : "rgba(211, 47, 47, 0.2)"
-  }`,
-  "& .MuiAlert-icon": {
-    color: severity === "success" ? "#2e7d32" : "#d32f2f",
+const StyledRadio = styled(Radio)(() => ({
+  color: theme.secondary,
+  "&.Mui-checked": {
+    color: theme.primary,
   },
 }));
 
-// Transition for Snackbar
-function SlideTransition(props) {
-  return <Slide {...props} direction="up" />;
-}
-
 const RegisterForm = () => {
   const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
-  const { showAlert } = useAlert(); // Use the alert hook
-
-  // Remove these state variables since they're now handled by the AlertContext
-  // const [alertOpen, setAlertOpen] = useState(false);
-  // const [alertMessage, setAlertMessage] = useState("");
-  // const [alertSeverity, setAlertSeverity] = useState("success");
+  const { showAlert } = useAlert();
 
   const formik = useFormik({
     initialValues: {
-      username: "",
-      password: "",
       nombre_completo: "",
       email: "",
+      rol: "student", // Valor predeterminado
     },
     validationSchema,
-    onSubmit: async (values, { setSubmitting, setErrors, resetForm }) => {
+    onSubmit: async (values, { setSubmitting, resetForm }) => {
       try {
-        // Add the default role to the values
+        // Enviamos nombre, correo y rol
         const userData = {
-          ...values,
-          rol: "student", // Always set role to student
+          nombre_completo: values.nombre_completo,
+          email: values.email,
+          rol: values.rol,
         };
 
-        // Make direct API call using axios with full URL
-        // Update to use the correct API URL
+        // Hace la llamada API con los campos requeridos
         const response = await axios.post(
           "http://127.0.0.1:8000/usuarios/registrar/",
           userData
         );
 
-        if (response.status === 200) {
-          // Show success alert using the context
-          showAlert(
-            "¡Registro exitoso! Redirigiendo al inicio de sesión...",
-            "success"
-          );
-          // Reset form after successful registration
+        if (response.status === 201) {
+          // Muestra alerta de éxito
+          showAlert({
+            message: "¡Registro exitoso! Redirigiendo al inicio de sesión...",
+            severity: "success",
+          });
+
+          // Resetea el formulario
           resetForm();
 
-          // Redirect to login after a short delay
+          // Redirecciona después de un breve retraso
           setTimeout(() => {
             router.push("/login");
           }, 2000);
         } else {
-          // Show error alert using the context
-          showAlert(
-            "Error al registrar. Por favor, inténtalo de nuevo.",
-            "error"
-          );
+          showAlert({
+            message: "Error al registrar. Por favor, inténtalo de nuevo.",
+            severity: "error",
+          });
         }
       } catch (error) {
-        // Show error alert with specific message using the context
+        // Manejo de errores detallado
         let errorMessage = "Error al registrar. Por favor, inténtalo de nuevo.";
 
         if (error.response) {
           if (error.response.status === 404) {
             errorMessage =
-              "Error: No se pudo conectar con el servidor de registro. Verifique la URL del API.";
+              "Error: No se pudo conectar con el servidor de registro.";
           } else if (error.response.data) {
             if (error.response.data.detail) {
               errorMessage = error.response.data.detail;
@@ -231,7 +197,7 @@ const RegisterForm = () => {
             } else if (error.response.data.message) {
               errorMessage = error.response.data.message;
             } else {
-              // If there's a validation error (common in Django REST Framework)
+              // Si hay un error de validación (común en Django REST Framework)
               const firstErrorKey = Object.keys(error.response.data)[0];
               if (
                 firstErrorKey &&
@@ -248,28 +214,18 @@ const RegisterForm = () => {
           errorMessage = `Error: ${error.message}`;
         }
 
-        showAlert(errorMessage, "error");
+        showAlert({
+          message: errorMessage,
+          severity: "error",
+        });
       }
       setSubmitting(false);
     },
   });
 
-  const handleClickShowPassword = () => {
-    setShowPassword(!showPassword);
-  };
-
   const handleGoBack = () => {
     router.push("/");
   };
-
-  // This function is no longer needed since alerts are handled by the context
-  // Remove this function
-  // const handleAlertClose = (event, reason) => {
-  //   if (reason === "clickaway") {
-  //     return;
-  //   }
-  //   setAlertOpen(false);
-  // };
 
   return (
     <SignInContainer direction="column" justifyContent="space-between">
@@ -340,53 +296,6 @@ const RegisterForm = () => {
             mt: 3,
           }}
         >
-          {/* Campo de Nombre de Usuario */}
-          <FormControl>
-            <StyledFormLabel htmlFor="username">
-              Nombre de usuario
-            </StyledFormLabel>
-            <StyledTextField
-              id="username"
-              type="text"
-              name="username"
-              placeholder="Ingresa tu nombre de usuario"
-              fullWidth
-              variant="outlined"
-              {...formik.getFieldProps("username")}
-              error={formik.touched.username && Boolean(formik.errors.username)}
-              helperText={formik.touched.username && formik.errors.username}
-            />
-          </FormControl>
-
-          {/* Campo de Contraseña */}
-          <FormControl>
-            <StyledFormLabel htmlFor="password">Contraseña</StyledFormLabel>
-            <StyledTextField
-              id="password"
-              type={showPassword ? "text" : "password"}
-              name="password"
-              placeholder="Ingresa tu contraseña"
-              fullWidth
-              variant="outlined"
-              {...formik.getFieldProps("password")}
-              error={formik.touched.password && Boolean(formik.errors.password)}
-              helperText={formik.touched.password && formik.errors.password}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={handleClickShowPassword}
-                      edge="end"
-                      sx={{ color: theme.secondary }}
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </FormControl>
-
           {/* Campo de Nombre Completo */}
           <FormControl>
             <StyledFormLabel htmlFor="nombre_completo">
@@ -428,7 +337,46 @@ const RegisterForm = () => {
             />
           </FormControl>
 
-          {/* Removed the role field */}
+          {/* Selección de Rol */}
+          <FormControl>
+            <StyledFormLabel id="rol-label">Tipo de cuenta</StyledFormLabel>
+            <RadioGroup
+              aria-labelledby="rol-label"
+              name="rol"
+              value={formik.values.rol}
+              onChange={formik.handleChange}
+              row
+              sx={{ justifyContent: "space-around", mt: 1 }}
+            >
+              <FormControlLabel
+                value="student"
+                control={<StyledRadio />}
+                label="Estudiante"
+                sx={{
+                  "& .MuiFormControlLabel-label": {
+                    fontWeight: formik.values.rol === "student" ? "600" : "400",
+                    color: theme.text,
+                  },
+                }}
+              />
+              <FormControlLabel
+                value="teacher"
+                control={<StyledRadio />}
+                label="Profesor"
+                sx={{
+                  "& .MuiFormControlLabel-label": {
+                    fontWeight: formik.values.rol === "teacher" ? "600" : "400",
+                    color: theme.text,
+                  },
+                }}
+              />
+            </RadioGroup>
+            {formik.touched.rol && formik.errors.rol && (
+              <Typography color="error" variant="caption">
+                {formik.errors.rol}
+              </Typography>
+            )}
+          </FormControl>
 
           {/* Botón de Registro */}
           <StyledButton

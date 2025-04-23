@@ -165,6 +165,11 @@ const LoginForm = () => {
     router.push("/");
   };
 
+  // Función para manejar la recuperación de contraseña
+  const handleRecoverPassword = () => {
+    router.push("/login/recover");
+  };
+
   return (
     <SignInContainer direction="column" justifyContent="space-between">
       {/* Botón de regresar */}
@@ -282,6 +287,13 @@ const LoginForm = () => {
             />
           </FormControl>
 
+          {/* Recordar contraseña (agregado del segundo código) */}
+          <FormControlLabel
+            control={<Checkbox value="remember" color="primary" />}
+            label="Recordar contraseña"
+            sx={{ color: theme.secondary }}
+          />
+
           {/* Botón de inicio de sesión */}
           <StyledButton
             type="submit"
@@ -292,11 +304,12 @@ const LoginForm = () => {
             Iniciar sesión
           </StyledButton>
 
-          {/* Olvidé mi contraseña */}
+          {/* Olvidé mi contraseña con funcionalidad de navegación */}
           <Link
             component="button"
             type="button"
             variant="body2"
+            onClick={handleRecoverPassword}
             sx={{
               alignSelf: "center",
               color: theme.secondary,

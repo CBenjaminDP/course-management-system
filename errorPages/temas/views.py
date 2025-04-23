@@ -8,6 +8,35 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from unidades.models import Unidad
+
+
+# Función para obtener temas por unidad
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def temas_por_unidad(request, unidad_id):
+    try:
+        # Verificar que la unidad existe
+        unidad = get_object_or_404(Unidad, id=unidad_id)
+        
+        # Obtener todos los temas de esa unidad
+        temas = Tema.objects.filter(unidad=unidad).order_by('orden')
+        
+        # Formatear la respuesta
+        data = [
+            {
+                'id': str(tema.id),
+                'nombre': tema.nombre,
+                'unidad_id': str(tema.unidad.id),
+                'unidad_nombre': tema.unidad.nombre,
+                'descripcion': tema.descripcion,
+                'orden': tema.orden
+            }
+            for tema in temas
+        ]
+        return JsonResponse(data, safe=False)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
 
 
 #Metodo que devuelve el JSON
@@ -117,6 +146,3 @@ def obtener_tema(request, id):
             #Si hay un error retornar un JSON
             return JsonResponse({'mensaje': 'Error al obtener el tema'}, status=400)
    return JsonResponse({'mensaje': 'Método no permitido'}, status=405)
-   
-
-            

@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import Carousel from "react-material-ui-carousel";
 import axios from "axios";
 import SearchIcon from "@mui/icons-material/Search";
+import CourseDetailModal from "../components/PaginaInicial/CourseDetailModal";
 
 // Estilos globales actualizados con tema minimalista
 const globalStyles = (
@@ -55,6 +56,8 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedCourseId, setSelectedCourseId] = useState(null);
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -99,6 +102,16 @@ const HomePage = () => {
 
   const handleRegisterClick = () => {
     router.push("/register");
+  };
+
+  // Funciones para el modal
+  const handleOpenModal = (courseId) => {
+    setSelectedCourseId(courseId);
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
   };
 
   return (
@@ -289,7 +302,7 @@ const HomePage = () => {
                         boxShadow: "0 4px 12px rgba(255, 215, 0, 0.3)",
                       },
                     }}
-                    onClick={() => router.push(`/courses/${course.id}`)}
+                    onClick={() => handleOpenModal(course.id)}
                   >
                     Ver curso
                   </Button>
@@ -477,7 +490,7 @@ const HomePage = () => {
                             color: theme.text,
                           },
                         }}
-                        onClick={() => router.push(`/courses/${course.id}`)}
+                        onClick={() => handleOpenModal(course.id)}
                       >
                         Ver detalles
                       </Button>
@@ -505,6 +518,13 @@ const HomePage = () => {
           </Typography>
         </Box>
       </Box>
+
+      {/* Modal de detalles del curso */}
+      <CourseDetailModal
+        open={modalOpen}
+        onClose={handleCloseModal}
+        courseId={selectedCourseId}
+      />
     </>
   );
 };

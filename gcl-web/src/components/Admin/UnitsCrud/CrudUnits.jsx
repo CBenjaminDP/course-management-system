@@ -24,6 +24,8 @@ import ModalUpdateUnit from "./ModalUpdateUnit";
 import ModalCreateUnits from "./ModalCreateUnits";
 import { tableStyles } from "../../../styles/tableStyles";
 import { useAlert } from "../../../context/AlertContext"; // Import useAlert hook
+// Add this import at the top of your file with other imports
+import { MenuBook } from "@mui/icons-material";
 
 // Define theme colors to match login
 const theme = {
@@ -383,5 +385,27 @@ const CrudUnits = () => {
     </Card>
   );
 };
+
+const handleNavigateToTopics = (unitId) => {
+  router.push(`/teacher/courses/${courseId}/units/${unitId}/topics`);
+};
+
+// En la parte de renderizado de las unidades, agrega un botón para navegar a los temas:
+<Button
+  variant="contained"
+  startIcon={<MenuBook />}
+  onClick={() => handleNavigateToTopics(unit.id)}
+  sx={{
+    backgroundColor: theme.primary,
+    color: theme.text,
+    borderRadius: "20px",
+    padding: "8px 16px",
+    "&:hover": {
+      backgroundColor: theme.hover,
+    },
+  }}
+>
+  Gestionar Temas
+</Button>;
 
 export default CrudUnits;

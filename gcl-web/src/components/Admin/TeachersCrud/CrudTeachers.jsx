@@ -232,6 +232,7 @@ const CrudTeachers = () => {
         severity: "error",
         duration: 6000,
       });
+      setOpenModal(false); // Cerrar el modal en caso de error
       console.error(err);
       return false;
     }

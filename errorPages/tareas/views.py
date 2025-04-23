@@ -8,6 +8,34 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from temas.models import Tema
+
+# Función para obtener tareas por tema
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def tareas_por_tema(request, tema_id):
+    try:
+        # Verificar que el tema existe
+        tema = get_object_or_404(Tema, id=tema_id)
+        
+        # Obtener todas las tareas de ese tema
+        tareas = Tarea.objects.filter(tema=tema)
+        
+        # Formatear la respuesta
+        data = [
+            {
+                'id': str(tarea.id),
+                'titulo': tarea.titulo,
+                'descripcion': tarea.descripcion,
+                'fecha_entrega': tarea.fecha_entrega,
+                'tema_id': str(tarea.tema.id),
+                'tema_nombre': tarea.tema.nombre
+            }
+            for tarea in tareas
+        ]
+        return JsonResponse(data, safe=False)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
 
 #Metodo que devuelve el JSON
 @api_view(['GET'])
@@ -122,7 +150,7 @@ def obtener_tarea(request, id):
                 'titulo': tarea.titulo,
                 'descripcion': tarea.descripcion,
                 'fecha_entrega': tarea.fecha_entrega,
-                'tema': tarea.tema.nombre,
+                'tema': tarea.tema.id,  # Devolvemos el ID para poder editarlo
             }
             #Retornar un JSON con los datos del objeto
             return JsonResponse(data, status=200)
@@ -130,6 +158,3 @@ def obtener_tarea(request, id):
             #Retornar un JSON con un mensaje de error
             return JsonResponse({'error': str(e)}, status=400)
     return JsonResponse({'error': 'Metodo no permitido'}, status=405)
-
-
-        

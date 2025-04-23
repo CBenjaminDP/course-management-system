@@ -12,6 +12,7 @@ import Swal from 'sweetalert2';
 import { tableStyles } from '../../../styles/tableStyles';
 import ModalCreateTopic from './ModalCreateTopic';
 import ModalUpdateTopic from './ModalUpdateTopic';
+import { Assignment } from '@mui/icons-material'; // Add this import
 
 // Updated theme colors to match gold theme
 const theme = {
@@ -333,6 +334,22 @@ const CrudTopics = ({ unitId }) => {
                       onClick={() => handleDeleteTopic(topic.id)}>
                       <Delete />
                     </IconButton>
+                    <Button
+                      variant="contained"
+                      startIcon={<Assignment />}
+                      onClick={() => handleNavigateToTasks(topic.id)}
+                      sx={{
+                        backgroundColor: theme.primary,
+                        color: theme.text,
+                        borderRadius: "20px",
+                        padding: "8px 16px",
+                        "&:hover": {
+                          backgroundColor: theme.hover,
+                        },
+                      }}
+                    >
+                      Gestionar Tareas
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -362,3 +379,8 @@ const CrudTopics = ({ unitId }) => {
 };
 
 export default CrudTopics;
+
+const handleNavigateToTasks = (topicId) => {
+  const { courseId, unitId } = router.query;
+  router.push(`/teacher/courses/${courseId}/units/${unitId}/topics/${topicId}/tasks`);
+};

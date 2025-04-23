@@ -21,21 +21,26 @@ const AuthGuard = ({ children }) => {
 
       // If user state is defined (not undefined)
       if (user !== undefined) {
+        const path = window.location.pathname;
+        const isPublicPath =
+          path === "/" ||
+          path === "/login" ||
+          path === "/register" ||
+          path === "/recover" ||
+          path.startsWith("/login/recover/reset-password");
+
         // If user is null (logged out) and not on an allowed public page
-        if (
-          user === null &&
-          !["/login", "/", "/register"].includes(window.location.pathname)
-        ) {
+        if (user === null && !isPublicPath) {
           console.log("User logged out, redirecting to login page");
           window.location.href = "/login"; // Use direct navigation instead of router
         }
         // If user is authenticated and on login or home page
-        else if (user && ["/login", "/"].includes(window.location.pathname)) {
+        else if (user && (path === "/login" || path === "/")) {
           router.push("/dashboard");
         }
       }
     }
-  }, [user, router]);
+  }, [user, router, setUser]);
 
   return children;
 };

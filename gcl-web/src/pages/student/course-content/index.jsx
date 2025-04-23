@@ -1,15 +1,15 @@
 import { Box } from "@mui/material";
 import DashboardLayout from "../../../layouts/DashboardLayout";
-import PassedCourses from "@/components/Student/PassedCourses";
+import CourseContent from "@/components/Student/CourseContent";
 
-function PagePassedCourses() {
+function PageMoreCourses() {
   return (
     <DashboardLayout>
       <Box sx={{ minHeight: "100vh" }}>
-        <PassedCourses />
+        <CourseContent />
       </Box>
     </DashboardLayout>
   );
 }
 
-export default PagePassedCourses;
+export default PageMoreCourses;
