@@ -303,8 +303,7 @@ const CrudCourses = () => {
                         color="text.secondary"
                         sx={{ my: 1 }}
                       >
-                        {formatDate(course.fecha_inicio)} -{" "}
-                        {formatDate(course.fecha_fin)}
+                        {formatDate(course.fecha_inicio)}
                       </Typography>
                       <Typography variant="body2" sx={{ mb: 2 }}>
                         {course.descripcion?.substring(0, 100)}...
@@ -481,18 +480,8 @@ const CrudCourses = () => {
                     <CalendarToday color="primary" />
                   </ListItemIcon>
                   <ListItemText
-                    primary="Fecha de inicio"
+                    primary="Fecha creación"
                     secondary={formatDate(selectedCourse.fecha_inicio)}
-                  />
-                </ListItem>
-
-                <ListItem>
-                  <ListItemIcon>
-                    <CalendarToday color="primary" />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="Fecha de fin"
-                    secondary={formatDate(selectedCourse.fecha_fin)}
                   />
                 </ListItem>
 
