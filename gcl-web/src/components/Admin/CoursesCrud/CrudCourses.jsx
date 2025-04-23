@@ -95,6 +95,17 @@ const CrudCourses = () => {
   const formatDate = (dateString) => {
     if (!dateString) return "No definida";
     const options = { year: "numeric", month: "long", day: "numeric" };
+    // Ajuste: crear la fecha como si fuera local (no UTC)
+    const dateParts = dateString.split("-");
+    if (dateParts.length >= 3) {
+      // yyyy-mm-dd
+      const year = parseInt(dateParts[0], 10);
+      const month = parseInt(dateParts[1], 10) - 1; // Meses en JS empiezan en 0
+      const day = parseInt(dateParts[2], 10);
+      const localDate = new Date(year, month, day);
+      return localDate.toLocaleDateString("es-ES", options);
+    }
+    // Si no es formato yyyy-mm-dd, usar el método original
     return new Date(dateString).toLocaleDateString("es-ES", options);
   };
 

@@ -61,7 +61,7 @@ const ModalCreateCourse = ({ open, onClose, onCreate, rol, id }) => {
     descripcion: "",
     profesor: "",
     fecha_inicio: "",
-    fecha_fin: "",
+    fecha_fin: "2025-12-31", // <-- Default end date
     estado: true,
     imagen_url: "",
   });
@@ -88,10 +88,10 @@ const ModalCreateCourse = ({ open, onClose, onCreate, rol, id }) => {
     };
 
     if (open && rol === "teacher") {
-      setFormData((prev) => ({ ...prev, profesor: id }));
+      setFormData((prev) => ({ ...prev, profesor: id, fecha_fin: "2025-12-31" }));
       fetchTeachers();
     } else {
-      setFormData((prev) => ({ ...prev, profesor: "" }));
+      setFormData((prev) => ({ ...prev, profesor: "", fecha_fin: "2025-12-31" }));
       fetchTeachers();
     }
   }, [open]);
@@ -153,7 +153,7 @@ const ModalCreateCourse = ({ open, onClose, onCreate, rol, id }) => {
         descripcion: "",
         profesor: "",
         fecha_inicio: "",
-        fecha_fin: "",
+        fecha_fin: "2025-12-31", // <-- Reset to default
         estado: true,
         imagen_url: "",
       });
@@ -257,40 +257,20 @@ const ModalCreateCourse = ({ open, onClose, onCreate, rol, id }) => {
               </FormControl>
             )}
 
-            <Grid container spacing={2} alignItems="flex-end">
-              <Grid item xs={6}>
-                <TextField
-                  label="Fecha de Inicio"
-                  type="date"
-                  name="fecha_inicio"
-                  value={formData.fecha_inicio}
-                  onChange={handleChange}
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
-                  required
-                  inputProps={{
-                    min: new Date().toISOString().split("T")[0],
-                  }}
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  label="Fecha de Fin"
-                  type="date"
-                  name="fecha_fin"
-                  value={formData.fecha_fin}
-                  onChange={handleChange}
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
-                  required
-                  inputProps={{
-                    min:
-                      formData.fecha_inicio ||
-                      new Date().toISOString().split("T")[0],
-                  }}
-                />
-              </Grid>
-            </Grid>
+            {/* Only show Fecha de Inicio */}
+            <TextField
+              label="Fecha de Inicio"
+              type="date"
+              name="fecha_inicio"
+              value={formData.fecha_inicio}
+              onChange={handleChange}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              required
+              inputProps={{
+                min: new Date().toISOString().split("T")[0],
+              }}
+            />
 
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <Typography variant="body1" sx={{ mr: 2 }}>
