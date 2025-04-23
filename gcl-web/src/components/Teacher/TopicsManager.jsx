@@ -176,6 +176,30 @@ const TopicsManager = ({
   };
 
   const handleSubmit = async () => {
+    // Validación: no permitir campos vacíos
+    if (
+      !currentTopic.nombre.trim() ||
+      !currentTopic.descripcion.trim() ||
+      !currentTopic.orden.toString().trim()
+    ) {
+      showAlert({
+        message: "No se pueden guardar campos vacíos.",
+        severity: "warning",
+      });
+      handleCloseDialog(); // Cierra el modal si hay campos vacíos
+      return;
+    }
+
+    // Validación: el número de orden no puede ser menor a 1
+    if (Number(currentTopic.orden) < 1) {
+      showAlert({
+        message: "El número de orden debe ser mayor o igual a 1.",
+        severity: "warning",
+      });
+      handleCloseDialog()
+      return;
+    }
+
     try {
       const token = Cookies.get("accessToken");
       const topicData = {
