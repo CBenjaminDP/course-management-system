@@ -270,7 +270,7 @@ const getTaskTypeName = (type) => {
 };
 
 const CourseContent = ({ courseId, onBack }) => {
-  const { showAlert } = useAlert();
+  const { showAlert, showConfirmation } = useAlert();
   const [loading, setLoading] = useState(true);
   const [course, setCourse] = useState(null);
   const [units, setUnits] = useState([]);
@@ -461,42 +461,55 @@ const CourseContent = ({ courseId, onBack }) => {
     }
   };
 
-  // Reiniciar el progreso del curso
   const handleResetProgress = async () => {
-    if (
-      window.confirm(
-        "¿Estás seguro de que deseas reiniciar todo tu progreso en este curso? Esta acción no se puede deshacer."
-      )
-    ) {
-      try {
-        const token = Cookies.get("accessToken");
-        const headers = { Authorization: `Bearer ${token}` };
-
-        await axios.post(
-          `http://localhost:8000/inscripciones/reiniciar-progreso/${inscripcionId}/`,
-          {},
-          { headers }
-        );
-
-        // Reiniciar el estado local
-        setUserProgress([]);
-        setCourseProgress(0);
-
-        // Actualizar el progreso desde el servidor
-        await fetchUserProgress();
-
-        showAlert({
-          message: "Progreso reiniciado correctamente",
-          severity: "success",
-        });
-      } catch (error) {
-        console.error("Error al reiniciar el progreso:", error);
-        showAlert({
-          message: "Error al reiniciar el progreso",
-          severity: "error",
-        });
-      }
+    // Verificar si el progreso ya está en 0%
+    if (courseProgress === 0) {
+      showAlert({
+        message: "No hay progreso que reiniciar. El curso ya está en 0%.",
+        severity: "info",
+        title: "Sin cambios",
+      });
+      return; // Salir de la función si no hay progreso que reiniciar
     }
+
+    // Si hay progreso, mostrar el diálogo de confirmación
+    showConfirmation({
+      title: "Reiniciar progreso",
+      message:
+        "¿Estás seguro de que deseas reiniciar todo tu progreso en este curso? Esta acción no se puede deshacer.",
+      confirmButtonText: "Sí, reiniciar",
+      cancelButtonText: "Cancelar",
+      onConfirm: async () => {
+        try {
+          const token = Cookies.get("accessToken");
+          const headers = { Authorization: `Bearer ${token}` };
+
+          await axios.post(
+            `http://localhost:8000/inscripciones/reiniciar-progreso/${inscripcionId}/`,
+            {},
+            { headers }
+          );
+
+          // Reiniciar el estado local
+          setUserProgress([]);
+          setCourseProgress(0);
+
+          // Actualizar el progreso desde el servidor
+          await fetchUserProgress();
+
+          showAlert({
+            message: "Progreso reiniciado correctamente",
+            severity: "success",
+          });
+        } catch (error) {
+          console.error("Error al reiniciar el progreso:", error);
+          showAlert({
+            message: "Error al reiniciar el progreso",
+            severity: "error",
+          });
+        }
+      },
+    });
   };
 
   const handleUnitClick = (unitId) => {
@@ -1280,18 +1293,6 @@ const CourseContent = ({ courseId, onBack }) => {
                         <Typography variant="body2" sx={{ mb: 3 }}>
                           Completa esta tarea y súbela para evaluación.
                         </Typography>
-                        <Grid container spacing={2}>
-                          <Grid item xs={12} sm={6}>
-                            <StyledButton fullWidth>
-                              Descargar instrucciones
-                            </StyledButton>
-                          </Grid>
-                          <Grid item xs={12} sm={6}>
-                            <StyledButton fullWidth variant="secondary">
-                              Subir tarea
-                            </StyledButton>
-                          </Grid>
-                        </Grid>
                       </Paper>
                     </Box>
                   )}
@@ -1304,10 +1305,6 @@ const CourseContent = ({ courseId, onBack }) => {
                         mt: 4,
                       }}
                     >
-                      <StyledButton variant="secondary">
-                        Tarea anterior
-                      </StyledButton>
-
                       <Box>
                         {!userProgress.includes(activeTaskData.id) ? (
                           <StyledButton
@@ -1335,75 +1332,11 @@ const CourseContent = ({ courseId, onBack }) => {
                           </Typography>
                         )}
                       </Box>
-
-                      <StyledButton>Siguiente tarea</StyledButton>
                     </Box>
                   )}
                 </Paper>
 
                 {/* Sección de recursos adicionales */}
-                <Paper
-                  sx={{
-                    p: 3,
-                    borderRadius: "12px",
-                    mb: 3,
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-                  }}
-                >
-                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                    Recursos adicionales
-                  </Typography>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6} md={4}>
-                      <StyledCard>
-                        <StyledCardMedia
-                          image="https://via.placeholder.com/300x200?text=Recurso+1"
-                          title="Recurso adicional 1"
-                        />
-                        <CardContent>
-                          <Typography variant="subtitle1" fontWeight={600}>
-                            Guía de referencia
-                          </Typography>
-                          <Typography variant="body2" color="textSecondary">
-                            Material complementario para profundizar
-                          </Typography>
-                        </CardContent>
-                      </StyledCard>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={4}>
-                      <StyledCard>
-                        <StyledCardMedia
-                          image="https://via.placeholder.com/300x200?text=Recurso+2"
-                          title="Recurso adicional 2"
-                        />
-                        <CardContent>
-                          <Typography variant="subtitle1" fontWeight={600}>
-                            Material de práctica
-                          </Typography>
-                          <Typography variant="body2" color="textSecondary">
-                            Ejercicios adicionales para practicar
-                          </Typography>
-                        </CardContent>
-                      </StyledCard>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={4}>
-                      <StyledCard>
-                        <StyledCardMedia
-                          image="https://via.placeholder.com/300x200?text=Recurso+3"
-                          title="Recurso adicional 3"
-                        />
-                        <CardContent>
-                          <Typography variant="subtitle1" fontWeight={600}>
-                            Documentación oficial
-                          </Typography>
-                          <Typography variant="body2" color="textSecondary">
-                            Enlaces a fuentes de referencia
-                          </Typography>
-                        </CardContent>
-                      </StyledCard>
-                    </Grid>
-                  </Grid>
-                </Paper>
               </Box>
             ) : (
               <Box sx={{ textAlign: "center", py: 8 }}>
