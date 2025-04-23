@@ -253,6 +253,7 @@ def obtener_usuario_actual(request):
         'id': usuario.id,
         'username': usuario.username,
         'email': usuario.email,
+        'nombre_completo': usuario.nombre_completo,
         'rol': usuario.rol,
         # otros campos que necesites
     }

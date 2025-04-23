@@ -261,7 +261,7 @@ const CrudCoursesTeacher = ({ onViewUnits }) => {
 
       if (isEditing) {
         await axios.put(
-          `http://localhost:8000/cursos/detalle/${currentCourse.id}/`,
+          `http://localhost:8000/cursos/actualizar_curso/${currentCourse.id}/`,
           courseData,
           {
             headers: { Authorization: `Bearer ${token}` },

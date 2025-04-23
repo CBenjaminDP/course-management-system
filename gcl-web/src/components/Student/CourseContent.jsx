@@ -35,6 +35,7 @@ import {
 import axios from "axios";
 import Cookies from "js-cookie";
 import { useAlert } from "../../context/AlertContext";
+import SimpleCertificate from "./SimpleCertificate";
 
 // Paleta de colores
 const theme = {
@@ -287,6 +288,8 @@ const CourseContent = ({ courseId, onBack }) => {
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [inscripcionId, setInscripcionId] = useState(null);
   const [loadingProgress, setLoadingProgress] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+
   const isMobile = useMediaQuery("(max-width:900px)");
 
   useEffect(() => {
@@ -360,6 +363,9 @@ const CourseContent = ({ courseId, onBack }) => {
         { headers }
       );
       const userId = userResponse.data.id;
+      console.log("Usuario actual:", userResponse.data);
+
+      setCurrentUser(userResponse.data); // <-- AÑADE ESTA LÍNEA
 
       // Obtener inscripciones del usuario
       const inscripcionesResponse = await axios.get(
@@ -1343,6 +1349,37 @@ const CourseContent = ({ courseId, onBack }) => {
                 <Typography variant="h5" color="textSecondary" gutterBottom>
                   Selecciona una tarea para ver su contenido
                 </Typography>
+              </Box>
+            )}
+
+            {/* Sección de certificado - muestra solo cuando el curso está completado al 100% */}
+            {isEnrolled && courseProgress === 100 && (
+              <Box sx={{ mt: 4 }}>
+                <Paper
+                  sx={{
+                    p: 3,
+                    borderRadius: "12px",
+                    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.08)",
+                    background:
+                      "linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%)",
+                  }}
+                >
+                  <SectionTitle variant="h5">
+                    Certificado de Finalización
+                  </SectionTitle>
+                  <SimpleCertificate
+                    userName={
+                      currentUser
+                        ? currentUser.nombre_completo || "Estudiante"
+                        : "Estudiante"
+                    }
+                    courseName={course.nombre}
+                    completionDate={new Date()}
+                    instructorName={
+                      course.profesor ? course.profesor.nombre : "Instructor"
+                    }
+                  />
+                </Paper>
               </Box>
             )}
           </Grid>
