@@ -220,7 +220,7 @@ const UnitsManager = ({ courseId, courseName, onBack, onViewTopics }) => {
         try {
           const token = Cookies.get("accessToken");
           await axios.delete(
-            `http://localhost:8000/unidades/detalle/${unitId}/`,
+            `http://localhost:8000/unidades/eliminar/${unitId}/`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }
