@@ -177,23 +177,33 @@ const TasksManager = ({
     try {
       const token = Cookies.get("accessToken");
 
-      // Añadir fecha actual al crear una nueva tarea
-      const taskData = {
-        ...currentTask,
-        tema: topicId,
-      };
-
-      // Solo al crear una nueva tarea añadimos la fecha actual
-      if (!isEditing) {
-        taskData.fecha_entrega = new Date().toISOString().split("T")[0];
+      let taskData;
+      if (isEditing) {
+        // Para editar, crea un objeto con solo los campos necesarios
+        taskData = {
+          titulo: currentTask.titulo,
+          descripcion: currentTask.descripcion,
+          fecha_entrega: new Date().toISOString().split("T")[0],
+          tema: topicId, // Asegúrate de que esto es lo que quieres
+        };
+      } else {
+        // Para crear una nueva tarea
+        taskData = {
+          ...currentTask,
+          tema: topicId,
+          fecha_entrega: new Date().toISOString().split("T")[0],
+        };
       }
 
       if (isEditing) {
         await axios.put(
-          `http://localhost:8000/tareas/detalle/${currentTask.id}/`,
+          `http://localhost:8000/tareas/actualizar/${currentTask.id}/`,
           taskData,
           {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
           }
         );
         showAlert({
@@ -202,7 +212,10 @@ const TasksManager = ({
         });
       } else {
         await axios.post("http://localhost:8000/tareas/crear/", taskData, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         });
         showAlert({
           message: "Tarea creada exitosamente",
@@ -214,9 +227,14 @@ const TasksManager = ({
       handleCloseDialog();
     } catch (error) {
       console.error("Error saving task:", error);
+      // Log más detalles del error para depuración
+      console.error(
+        "Error details:",
+        error.response ? error.response.data : error
+      );
       showAlert({
         message: `Error al ${isEditing ? "actualizar" : "crear"} la tarea: ${
-          error.message
+          error.response?.data?.error || error.message
         }`,
         severity: "error",
       });

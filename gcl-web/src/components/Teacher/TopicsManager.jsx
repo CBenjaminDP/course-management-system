@@ -185,7 +185,7 @@ const TopicsManager = ({
 
       if (isEditing) {
         await axios.put(
-          `http://localhost:8000/temas/detalle/${currentTopic.id}/`,
+          `http://localhost:8000/temas/actualizar/${currentTopic.id}/`,
           topicData,
           {
             headers: { Authorization: `Bearer ${token}` },
@@ -229,7 +229,7 @@ const TopicsManager = ({
         try {
           const token = Cookies.get("accessToken");
           await axios.delete(
-            `http://localhost:8000/temas/detalle/${topicId}/`,
+            `http://localhost:8000/temas/eliminar/${topicId}/`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }
