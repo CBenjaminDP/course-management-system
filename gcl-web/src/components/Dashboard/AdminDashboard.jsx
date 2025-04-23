@@ -42,6 +42,7 @@ const AdminDashboard = () => {
   const [success, setSuccess] = useState("");
   const { showAlert } = useAlert();
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   console.log(user);
@@ -288,7 +289,7 @@ const AdminDashboard = () => {
             />
             <TextField
               fullWidth
-              type="password"
+              type={showNewPassword ? "text" : "password"}
               label="Nueva Contraseña"
               value={passwordForm.newPassword}
               onChange={(e) =>
@@ -297,6 +298,22 @@ const AdminDashboard = () => {
                   newPassword: e.target.value,
                 })
               }
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      edge="end"
+                    >
+                      {showNewPassword ? (
+                        <VisibilityOffIcon />
+                      ) : (
+                        <VisibilityIcon />
+                      )}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
               required
               helperText="Mínimo 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial"
             />

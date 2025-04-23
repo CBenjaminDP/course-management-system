@@ -1,4 +1,13 @@
-import { Typography, Box, Paper, Grid, TextField, Button, InputAdornment, IconButton } from "@mui/material";
+import {
+  Typography,
+  Box,
+  Paper,
+  Grid,
+  TextField,
+  Button,
+  InputAdornment,
+  IconButton,
+} from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../../context/AuthorizationProvider";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
@@ -33,6 +42,7 @@ const TeacherDashboard = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handlePasswordChange = async (e) => {
@@ -259,10 +269,16 @@ const TeacherDashboard = () => {
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
-                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      onClick={() =>
+                        setShowCurrentPassword(!showCurrentPassword)
+                      }
                       edge="end"
                     >
-                      {showCurrentPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      {showCurrentPassword ? (
+                        <VisibilityOffIcon />
+                      ) : (
+                        <VisibilityIcon />
+                      )}
                     </IconButton>
                   </InputAdornment>
                 ),
@@ -271,7 +287,7 @@ const TeacherDashboard = () => {
             />
             <TextField
               fullWidth
-              type="password"
+              type={showNewPassword ? "text" : "password"}
               label="Nueva Contraseña"
               value={passwordForm.newPassword}
               onChange={(e) =>
@@ -280,6 +296,22 @@ const TeacherDashboard = () => {
                   newPassword: e.target.value,
                 })
               }
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      edge="end"
+                    >
+                      {showNewPassword ? (
+                        <VisibilityOffIcon />
+                      ) : (
+                        <VisibilityIcon />
+                      )}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
               required
               helperText="Mínimo 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial"
             />
@@ -298,10 +330,16 @@ const TeacherDashboard = () => {
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
                       edge="end"
                     >
-                      {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      {showConfirmPassword ? (
+                        <VisibilityOffIcon />
+                      ) : (
+                        <VisibilityIcon />
+                      )}
                     </IconButton>
                   </InputAdornment>
                 ),
